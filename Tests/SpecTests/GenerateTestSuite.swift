@@ -118,7 +118,7 @@ func generateTestSuite(_ suite: String) throws -> String {
 }
 
 func generateTestSuites() throws -> [String] {
-    return try ["Sections", "Interpolation", "Inverted", "Comments"].map(generateTestSuite)
+    return try ["Sections", "Interpolation", "Inverted", "Comments", "Partials"].map(generateTestSuite)
 }
 
 class GenerateTests: XCTestCase {

@@ -115,6 +115,9 @@ func render(ast: AST, contextStack: [Context]) -> String {
             case .none, .some:
                 out += render(ast: innerAST, contextStack: contextStack)
             }
+
+        case let .partial(partial):
+            out += render(ast: partial, contextStack: contextStack)
         }
     }
 

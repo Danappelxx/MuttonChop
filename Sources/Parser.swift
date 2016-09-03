@@ -12,6 +12,8 @@ public enum Token: Equatable {
     case openInvertedSection(variable: String)
     // {{/ variable }}
     case closeSection(variable: String)
+    // {{> partial }}
+    case partial(String)
 }
 
 public func ==(lhs: Token, rhs: Token) -> Bool {
@@ -80,6 +82,10 @@ func parseExpression(reader: Reader) throws -> Token {
     // close section
     case "/":
         return .closeSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+
+    // partial
+    case ">":
+        return .partial(String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
 
     default:
         return .variable(String([char] + content).trim(using: String.whitespaceAndNewLineCharacterSet))

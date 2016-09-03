@@ -3,6 +3,7 @@ public typealias AST = [ASTNode]
 public enum ASTNode: Equatable {
     case text(String)
     case variable(String)
+    case partial(ast: AST)
     case invertedSection(variable: String, ast: AST)
     case section(variable: String, ast: AST)
 }
@@ -21,11 +22,11 @@ public enum CompilerError: Error {
     case badSectionIdentifier(got: String, expected: String)
 }
 
-public func compile(tokens: [Token]) throws -> AST {
-    return try compile(tokens: AnyIterator(tokens.makeIterator()))
+public func compile(tokens: [Token], partials: [String:AST] = [:]) throws -> AST {
+    return try compile(tokens: AnyIterator(tokens.makeIterator()), partials: partials)
 }
 
-public func compile(tokens: AnyIterator<Token>, openToken: Token? = nil) throws -> AST {
+public func compile(tokens: AnyIterator<Token>, partials: [String:AST] = [:], openToken: Token? = nil) throws -> AST {
     var ast = AST()
 
     while let token = tokens.next() {
@@ -38,6 +39,12 @@ public func compile(tokens: AnyIterator<Token>, openToken: Token? = nil) throws 
 
         case let .variable(variable):
             ast.append(.variable(variable))
+
+        case let .partial(partial):
+            guard let partialAST = partials[partial] else {
+                break
+            }
+            ast.append(.partial(ast: partialAST))
 
         // nested section, recurse
         case .openSection:
