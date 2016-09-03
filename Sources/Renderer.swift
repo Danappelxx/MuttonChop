@@ -6,39 +6,6 @@ public enum Context {
     case array([Context])
     case dictionary([String: Context])
 
-    init(from any: Any) {
-
-        switch any {
-        case let value as Int:
-            self = .int(value)
-        case let value as Double:
-            self = .double(value)
-        case let value as String:
-            // workaround for nsjsonserialization not 
-            // handling booleans properly
-            switch value {
-            case "true":
-                self = .bool(true)
-            case "false":
-                self = .bool(false)
-            default:
-                self = .string(value)
-            }
-
-        case let value as [Any]:
-            self = .array(value.map(Context.init))
-
-        case let dictValue as [String:Any]:
-            var dict = [String:Context]()
-            for (key, value) in dictValue {
-                dict[key] = Context(from: value)
-            }
-            self = .dictionary(dict)
-
-        default: fatalError()
-        }
-    }
-
     var dictionary: [String:Context]? {
         guard case let .dictionary(dict) = self else {
             return nil

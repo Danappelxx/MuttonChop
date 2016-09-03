@@ -21,6 +21,10 @@ public enum CompilerError: Error {
     case badSectionIdentifier(got: String, expected: String)
 }
 
+public func compile(tokens: [Token]) throws -> AST {
+    return try compile(tokens: AnyIterator(tokens.makeIterator()))
+}
+
 public func compile(tokens: AnyIterator<Token>, openToken: Token? = nil) throws -> AST {
     var ast = AST()
 

@@ -8,6 +8,7 @@
 
 import XCTest
 @testable import Mustache
+import JSON
 
 /**
 Inverted Section tags and End Section tags are used in combination to wrap a
@@ -49,11 +50,11 @@ appropriate.
 final class InvertedTests: XCTestCase {
     func testFalsey() throws {
         let template = "\"{{^boolean}}This should be rendered.{{/boolean}}\""
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"This should be rendered.\"", "Falsey sections should have their contents rendered.")
@@ -61,11 +62,11 @@ final class InvertedTests: XCTestCase {
 
     func testTruthy() throws {
         let template = "\"{{^boolean}}This should not be rendered.{{/boolean}}\""
-        let contextJSONString = "{\"boolean\":\"true\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":true}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"\"", "Truthy sections should have their contents omitted.")
@@ -74,10 +75,10 @@ final class InvertedTests: XCTestCase {
     func testContext() throws {
         let template = "\"{{^context}}Hi {{name}}.{{/context}}\""
         let contextJSONString = "{\"context\":{\"name\":\"Joe\"}}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"\"", "Objects and hashes should behave like truthy values.")
@@ -86,10 +87,10 @@ final class InvertedTests: XCTestCase {
     func testList() throws {
         let template = "\"{{^list}}{{n}}{{/list}}\""
         let contextJSONString = "{\"list\":[{\"n\":1},{\"n\":2},{\"n\":3}]}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"\"", "Lists should behave like truthy values.")
@@ -98,10 +99,10 @@ final class InvertedTests: XCTestCase {
     func testEmptyList() throws {
         let template = "\"{{^list}}Yay lists!{{/list}}\""
         let contextJSONString = "{\"list\":[]}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"Yay lists!\"", "Empty lists should behave like falsey values.")
@@ -109,11 +110,11 @@ final class InvertedTests: XCTestCase {
 
     func testDoubled() throws {
         let template = "{{^bool}}\n* first\n{{/bool}}\n* {{two}}\n{{^bool}}\n* third\n{{/bool}}\n"
-        let contextJSONString = "{\"two\":\"second\",\"bool\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"two\":\"second\",\"bool\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "* first\n* second\n* third\n", "Multiple inverted sections per template should be permitted.")
@@ -121,11 +122,11 @@ final class InvertedTests: XCTestCase {
 
     func testNested_Falsey() throws {
         let template = "| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |"
-        let contextJSONString = "{\"bool\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"bool\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "| A B C D E |", "Nested falsey sections should have their contents rendered.")
@@ -133,11 +134,11 @@ final class InvertedTests: XCTestCase {
 
     func testNested_Truthy() throws {
         let template = "| A {{^bool}}B {{^bool}}C{{/bool}} D{{/bool}} E |"
-        let contextJSONString = "{\"bool\":\"true\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"bool\":true}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "| A  E |", "Nested truthy sections should be omitted.")
@@ -146,10 +147,10 @@ final class InvertedTests: XCTestCase {
     func testContextMisses() throws {
         let template = "[{{^missing}}Cannot find key 'missing'!{{/missing}}]"
         let contextJSONString = "{}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "[Cannot find key 'missing'!]", "Failed context lookups should be considered falsey.")
@@ -157,11 +158,11 @@ final class InvertedTests: XCTestCase {
 
     func testDottedNames_Truthy() throws {
         let template = "\"{{^a.b.c}}Not Here{{/a.b.c}}\" == \"\""
-        let contextJSONString = "{\"a\":{\"b\":{\"c\":\"true\"}}}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"a\":{\"b\":{\"c\":true}}}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"\" == \"\"", "Dotted names should be valid for Inverted Section tags.")
@@ -169,11 +170,11 @@ final class InvertedTests: XCTestCase {
 
     func testDottedNames_Falsey() throws {
         let template = "\"{{^a.b.c}}Not Here{{/a.b.c}}\" == \"Not Here\""
-        let contextJSONString = "{\"a\":{\"b\":{\"c\":\"false\"}}}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"a\":{\"b\":{\"c\":false}}}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"Not Here\" == \"Not Here\"", "Dotted names should be valid for Inverted Section tags.")
@@ -182,10 +183,10 @@ final class InvertedTests: XCTestCase {
     func testDottedNames_BrokenChains() throws {
         let template = "\"{{^a.b.c}}Not Here{{/a.b.c}}\" == \"Not Here\""
         let contextJSONString = "{\"a\":{}}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"Not Here\" == \"Not Here\"", "Dotted names that cannot be resolved should be considered falsey.")
@@ -193,11 +194,11 @@ final class InvertedTests: XCTestCase {
 
     func testSurroundingWhitespace() throws {
         let template = " | {{^boolean}}\t|\t{{/boolean}} | \n"
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, " | \t|\t | \n", "Inverted sections should not alter surrounding whitespace.")
@@ -205,11 +206,11 @@ final class InvertedTests: XCTestCase {
 
     func testInternalWhitespace() throws {
         let template = " | {{^boolean}} {{! Important Whitespace }}\n {{/boolean}} | \n"
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, " |  \n  | \n", "Inverted should not alter internal whitespace.")
@@ -217,11 +218,11 @@ final class InvertedTests: XCTestCase {
 
     func testIndentedInlineSections() throws {
         let template = " {{^boolean}}NO{{/boolean}}\n {{^boolean}}WAY{{/boolean}}\n"
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, " NO\n WAY\n", "Single-line sections should not alter surrounding whitespace.")
@@ -229,11 +230,11 @@ final class InvertedTests: XCTestCase {
 
     func testStandaloneLines() throws {
         let template = "| This Is\n{{^boolean}}\n|\n{{/boolean}}\n| A Line\n"
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "| This Is\n|\n| A Line\n", "Standalone lines should be removed from the template.")
@@ -241,11 +242,11 @@ final class InvertedTests: XCTestCase {
 
     func testStandaloneIndentedLines() throws {
         let template = "| This Is\n  {{^boolean}}\n|\n  {{/boolean}}\n| A Line\n"
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "| This Is\n|\n| A Line\n", "Standalone indented lines should be removed from the template.")
@@ -253,11 +254,11 @@ final class InvertedTests: XCTestCase {
 
     func testStandaloneLineEndings() throws {
         let template = "|\r\n{{^boolean}}\r\n{{/boolean}}\r\n|"
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "|\r\n|", "\"\r\n\" should be considered a newline for standalone tags.")
@@ -265,11 +266,11 @@ final class InvertedTests: XCTestCase {
 
     func testStandaloneWithoutPreviousLine() throws {
         let template = "  {{^boolean}}\n^{{/boolean}}\n/"
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "^\n/", "Standalone tags should not require a newline to precede them.")
@@ -277,11 +278,11 @@ final class InvertedTests: XCTestCase {
 
     func testStandaloneWithoutNewline() throws {
         let template = "^{{^boolean}}\n/\n  {{/boolean}}"
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "^\n/\n", "Standalone tags should not require a newline to follow them.")
@@ -289,11 +290,11 @@ final class InvertedTests: XCTestCase {
 
     func testPadding() throws {
         let template = "|{{^ boolean }}={{/ boolean }}|"
-        let contextJSONString = "{\"boolean\":\"false\"}"
-        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
+        let contextJSONString = "{\"boolean\":false}"
+        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
-        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
+        let ast = try compile(tokens: parse(reader: Reader(template)))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "|=|", "Superfluous in-tag whitespace should be ignored.")

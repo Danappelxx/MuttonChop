@@ -7,17 +7,50 @@
 //
 
 import XCTest
+import JSON
 @testable import Mustache
+
+extension Context {
+    init(from json: JSON) {
+        switch json {
+        case let .array(array):
+            self = .array(array.map(Context.init(from:)))
+        case let .object(dictionary):
+            self = .dictionary(dictionary.reduce([String:Context](), { dict, pair in
+                var dict = dict
+                dict[pair.key] = Context(from: pair.value)
+                return dict
+            }))
+        case let .number(number):
+            switch number {
+            case let .double(double) where floor(double) == double:
+                self = .int(Int(double))
+            case let .double(double):
+                self = .double(double)
+            case let .integer(int):
+                self = .int(int)
+            case let .unsignedInteger(int):
+                self = .int(Int(int))
+            }
+        case let .boolean(boolean):
+            self = .bool(boolean)
+        case let .string(string):
+            self = .string(string)
+        case .null:
+            fatalError("null is not supported")
+        }
+    }
+}
 
 func generateTestCase(name: String, description: String, contextJSON: String, template: String, expected: String) -> String {
     return [
         "    func test\(name)() throws {",
         "        let template = \"\(template)\"",
         "        let contextJSONString = \"\(contextJSON)\"",
-        "        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])",
+        "        let contextJSON = try JSONParser().parse(data: contextJSONString.data)",
         "        let context = Context(from: contextJSON)",
         "",
-        "        let ast = try compile(tokens: parse(reader: Reader(template))))",
+        "        let ast = try compile(tokens: parse(reader: Reader(template)))",
         "        let rendered = render(ast: ast, context: context)",
         "",
         "        XCTAssertEqual(rendered, \"\(expected)\", \"\(description)\")",
@@ -56,9 +89,6 @@ func generateTestSuite(_ suite: String) throws -> String {
             .replacingOccurrences(of: "\t", with: "\\t")
             .replacingOccurrences(of: "\r", with: "\\r")
             .replacingOccurrences(of: "\n", with: "\\n")
-            // workaround for nsjsonserialization broken boolean handling
-            .replacingOccurrences(of: "true", with: "\\\"true\\\"")
-            .replacingOccurrences(of: "false", with: "\\\"false\\\"")
 
         let template = (test["template"] as! String)
             .replacingOccurrences(of: "\\\"", with: "\"")
@@ -93,6 +123,14 @@ func generateTestSuites() throws -> [String] {
 
 class GenerateTests: XCTestCase {
     func testGenerate() throws {
-//        try generateTestSuites().forEach { print($0) }
+//        for suite in try generateTestSuites() {
+//            for _ in 0..<25 {
+//                print()
+//            }
+//            print(suite)
+//            for _ in 0..<25 {
+//                print()
+//            }
+//        }
     }
 }
