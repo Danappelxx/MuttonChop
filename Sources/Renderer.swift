@@ -165,19 +165,3 @@ func render(ast: AST, contextStack: [Context]) -> String {
 
     return out
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

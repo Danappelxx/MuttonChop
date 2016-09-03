@@ -1,7 +1,4 @@
 // stage 2 parsing
-// tokens [open, text, variable, text, close]
-// -> ast [section([text, variable, text])]
-
 public typealias AST = [ASTNode]
 public enum ASTNode: Equatable {
     case text(String)

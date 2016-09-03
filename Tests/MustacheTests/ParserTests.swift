@@ -29,35 +29,35 @@ class ParserTests: XCTestCase {
     func testTextParser() throws {
         let string = "Hello, world!"
         let reader = Reader(string)
-        let token = try TextParser.parse(reader: reader)
+        let token = try parseText(reader: reader)
         XCTAssertEqual(token, .text(string))
     }
 
     func testVariableParser() throws {
         let string = "{{ location }}"
         let reader = Reader(string)
-        let token = try ExpressionParser.parse(reader: reader)
+        let token = try parseExpression(reader: reader)
         XCTAssertEqual(token, .variable("location"))
     }
 
     func testOpenSectionParser() throws {
         let string = "{{# location }}"
         let reader = Reader(string)
-        let token = try ExpressionParser.parse(reader: reader)
+        let token = try parseExpression(reader: reader)
         XCTAssertEqual(token, .openSection(variable: "location"))
     }
 
     func testOpenInvertedSectionParser() throws {
         let string = "{{^ location }}"
         let reader = Reader(string)
-        let token = try ExpressionParser.parse(reader: reader)
+        let token = try parseExpression(reader: reader)
         XCTAssertEqual(token, .openInvertedSection(variable: "location"))
     }
 
     func testCloseSectionParser() throws {
         let string = "{{/ location }}"
         let reader = Reader(string)
-        let token = try ExpressionParser.parse(reader: reader)
+        let token = try parseExpression(reader: reader)
         XCTAssertEqual(token, .closeSection(variable: "location"))
     }
 }
