@@ -6,20 +6,6 @@ public enum Context {
     case array([Context])
     case dictionary([String: Context])
 
-    var dictionary: [String:Context]? {
-        guard case let .dictionary(dict) = self else {
-            return nil
-        }
-        return dict
-    }
-
-    var array: [Context]? {
-        guard case let .array(array) = self else {
-            return nil
-        }
-        return array
-    }
-
     var isTruthy: Bool {
         switch self {
         case let .bool(bool):
@@ -65,7 +51,9 @@ extension Sequence where Iterator.Element == Context {
                 return self.first(where: { _ in true })
             }
             for context in self {
-                if let value = context.dictionary?[variable] {
+                if
+                    case let .dictionary(dictionary) = context,
+                    let value = dictionary[variable] {
                     return value
                 }
             }
@@ -109,7 +97,7 @@ func render(ast: AST, contextStack: [Context]) -> String {
                 continue
             }
 
-            if let innerContexts = innerContext.array {
+            if case let .array(innerContexts) = innerContext {
                 out += innerContexts.map { render(ast: innerAST, contextStack: [$0] + contextStack) }.joined(separator: "")
             } else {
                 out += render(ast: innerAST, contextStack: [innerContext] + contextStack)
