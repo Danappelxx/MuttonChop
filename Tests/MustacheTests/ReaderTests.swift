@@ -12,28 +12,30 @@ import XCTest
 class ReaderTests: XCTestCase {
     func testPeekingPopping() {
         let string = "Hello, world!"
-        let reader = string.reader()
+        let reader = Reader(string)
         XCTAssertEqual(reader.peek(), "H")
         XCTAssertEqual(reader.peek(3), ["H", "e", "l"])
         XCTAssertEqual(reader.pop(), "H")
         XCTAssertEqual(reader.pop(3), ["e", "l", "l"])
+        XCTAssertEqual(reader.backPeek(3), ["e", "l", "l"])
         guard let popped = reader.pop(upTo: ["o", "r"]) else {
             return XCTFail("pop(upTo:) returned nil")
         }
         XCTAssertEqual(popped, ["o", ",", " ", "w"])
     }
-    
-//    func testTest() {
-////        try! print(generateTestSuites()[0])
-//        try! print(generateTestSuites()[1])
-//        try! print(generateTestSuites()[2])
-//        try! print(generateTestSuites()[3])
-//        
-//    }
+
+    func testPeekingPoppingIgnoring() {
+        let string = "Hello, world!"
+        let reader = Reader(string)
+        XCTAssertEqual(reader.peek(3, ignoring: ["l", "o"]), ["H", "e", ","])
+        XCTAssertEqual(reader.peek(3, ignoring: ["l", "o"]), ["H", "e", ","])
+        XCTAssertEqual(reader.pop(4, ignoring: ["l", "o"]), ["H", "e", ",", " "])
+        XCTAssertEqual(reader.pop(3, ignoring: ["w", "r"]), ["o", "l", "d"])
+    }
 
     func testWhitespace() {
         let string = "H   e   ll\to\n\n\t \t\n!"
-        let reader = string.reader()
+        let reader = Reader(string)
         XCTAssertEqual(reader.pop(), "H")
         XCTAssertEqual(reader.pop(), " ")
         reader.consume(using: String.whitespaceAndNewLineCharacterSet)

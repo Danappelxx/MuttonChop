@@ -44,7 +44,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "Hello from {Mustache}!\n", "Mustache-free templates should render as-is.")
@@ -56,7 +56,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "Hello, world!\n", "Unadorned tags should interpolate content into the template.")
@@ -68,7 +68,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "These characters should be HTML escaped: &amp; &quot; &lt; &gt;\n", "Basic interpolation should be HTML escaped.")
@@ -80,7 +80,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "These characters should not be HTML escaped: & \" < >\n", "Triple mustaches should interpolate without HTML escaping.")
@@ -92,7 +92,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "These characters should not be HTML escaped: & \" < >\n", "Ampersand should interpolate without HTML escaping.")
@@ -104,7 +104,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"85 miles an hour!\"", "Integers should interpolate seamlessly.")
@@ -116,7 +116,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"85 miles an hour!\"", "Integers should interpolate seamlessly.")
@@ -128,7 +128,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"85 miles an hour!\"", "Integers should interpolate seamlessly.")
@@ -140,7 +140,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"1.21 jiggawatts!\"", "Decimals should interpolate seamlessly with proper significance.")
@@ -152,7 +152,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"1.21 jiggawatts!\"", "Decimals should interpolate seamlessly with proper significance.")
@@ -164,7 +164,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"1.21 jiggawatts!\"", "Decimals should interpolate seamlessly with proper significance.")
@@ -176,7 +176,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "I () be seen!", "Failed context lookups should default to empty strings.")
@@ -188,7 +188,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "I () be seen!", "Failed context lookups should default to empty strings.")
@@ -200,7 +200,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "I () be seen!", "Failed context lookups should default to empty strings.")
@@ -212,7 +212,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"Joe\" == \"Joe\"", "Dotted names should be considered a form of shorthand for sections.")
@@ -224,7 +224,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"Joe\" == \"Joe\"", "Dotted names should be considered a form of shorthand for sections.")
@@ -236,7 +236,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"Joe\" == \"Joe\"", "Dotted names should be considered a form of shorthand for sections.")
@@ -248,7 +248,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"Phil\" == \"Phil\"", "Dotted names should be functional to any level of nesting.")
@@ -260,7 +260,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"\" == \"\"", "Any falsey value prior to the last part of the name should yield ''.")
@@ -272,7 +272,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"\" == \"\"", "Each part of a dotted name should resolve only against its parent.")
@@ -284,7 +284,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "\"Phil\" == \"Phil\"", "The first part of a dotted name should resolve as any other name.")
@@ -296,7 +296,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "| --- |", "Interpolation should not alter surrounding whitespace.")
@@ -308,7 +308,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "| --- |", "Interpolation should not alter surrounding whitespace.")
@@ -320,7 +320,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "| --- |", "Interpolation should not alter surrounding whitespace.")
@@ -332,7 +332,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "  ---\n", "Standalone interpolation should not alter surrounding whitespace.")
@@ -344,7 +344,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "  ---\n", "Standalone interpolation should not alter surrounding whitespace.")
@@ -356,7 +356,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "  ---\n", "Standalone interpolation should not alter surrounding whitespace.")
@@ -368,7 +368,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "|---|", "Superfluous in-tag whitespace should be ignored.")
@@ -380,7 +380,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "|---|", "Superfluous in-tag whitespace should be ignored.")
@@ -392,7 +392,7 @@ final class InterpolationTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "|---|", "Superfluous in-tag whitespace should be ignored.")

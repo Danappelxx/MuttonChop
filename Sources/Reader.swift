@@ -1,12 +1,50 @@
-public class Peeker<Element> {
-    fileprivate var lookahead = [Element]()
-    fileprivate let iterator: AnyIterator<Element>
+public protocol Peeker {
+    func peek(_ n: Int) -> [Character]
+    func peek(_ n: Int, ignoring: [Character]) -> [Character]
+    func backPeek(_ n: Int) -> [Character]
+}
 
-    public init(_ iterator: AnyIterator<Element>) {
+public extension Peeker {
+    func peek() -> Character? {
+        return peek(1).first
+    }
+
+    var done: Bool {
+        return peek() == nil
+    }
+}
+
+public protocol Popper {
+    func pop(_ n: Int) -> [Character]
+    func pop(_ n: Int, ignoring: [Character]) -> [Character]
+    var done: Bool { get }
+}
+
+public extension Popper {
+    @discardableResult
+    func pop() -> Character? {
+        return pop(1).first
+    }
+}
+
+public final class Reader: Peeker, Popper {
+    fileprivate let iterator: AnyIterator<Character>
+    fileprivate var lookahead = [Character]()
+    fileprivate var popped = [Character]()
+
+    public init(_ iterator: AnyIterator<Character>) {
         self.iterator = iterator
     }
 
-    public func peek(_ n: Int) -> [Element] {
+    public convenience init(_ string: String) {
+        self.init(AnyIterator(string.characters.makeIterator()))
+    }
+
+    public func backPeek(_ n: Int) -> [Character] {
+        return popped.last(n)
+    }
+
+    public func peek(_ n: Int) -> [Character] {
         for i in 0..<n {
             guard !lookahead.indices.contains(i) else {
                 continue
@@ -18,88 +56,88 @@ public class Peeker<Element> {
         }
         return lookahead.first(n)
     }
-}
 
-// inheritance to avoid type erasers (tried it, made stuff extremely ugly)
-public final class Reader<Element>: Peeker<Element>, IteratorProtocol, Sequence {
-    public func pop(_ n: Int) -> [Element] {
-        var elements = [Element]()
-        for _ in 0..<n {
-            guard let next = lookahead.popFirst() ?? iterator.next() else {
-                return elements
+    public func pop(_ n: Int) -> [Character] {
+        for i in 0..<n {
+            guard let char = lookahead.popFirst() ?? iterator.next() else {
+                return popped.last(i)
             }
-            elements.append(next)
+            popped.append(char)
         }
-        return elements
-    }
-
-    public func next() -> Element? {
-        return pop()
+        return popped.last(n)
     }
 }
 
-extension Peeker {
-    public func peek() -> Element? {
-        return peek(1).first
+public extension Reader {
+    func peek(_ n: Int, ignoring: [Character]) -> [Character] {
+        var remaining = n
+        var i = 0
+        while remaining > 0 {
+            defer { i += 1 }
+
+            guard !lookahead.indices.contains(i) else {
+                if !ignoring.contains(lookahead[i]) {
+                    remaining -= 1
+                }
+                continue
+            }
+            guard let next = iterator.next() else {
+                return lookahead.first(i)
+            }
+            lookahead.append(next)
+            if ignoring.contains(next) {
+                continue
+            }
+            remaining -= 1
+        }
+        return lookahead.first(i).filter { !ignoring.contains($0) }
+    }
+
+    func pop(_ n: Int, ignoring: [Character]) -> [Character] {
+        var characters = [Character]()
+        while characters.count < n {
+            guard let next = lookahead.popFirst() ?? iterator.next() else {
+                return characters
+            }
+            if ignoring.contains(next) {
+                continue
+            }
+            characters.append(next)
+        }
+        return characters
     }
 }
 
-extension Reader {
-    @discardableResult
-    public func pop() -> Element? {
-        return pop(1).first
-    }
-}
-
-extension Reader where Element: Equatable {
-    public func pop(upTo element: Element, discarding: Bool = true) -> [Element]? {
-        return pop(upTo: [element], discarding: discarding)
+public extension Reader {
+    func pop(upTo character: Character, discarding: Bool = true) -> [Character]? {
+        return pop(upTo: [character], discarding: discarding)
     }
 
-    public func pop(upTo elements: [Element], discarding: Bool = true) -> [Element]? {
-        let count = elements.count
+    func pop(upTo characters: [Character], discarding: Bool = true) -> [Character]? {
+        let count = characters.count
 
-        var popped: [Element] = []
-        while peek(count) != elements {
-            guard let el = pop() else {
+        var popped: [Character] = []
+        while peek(count) != characters {
+            guard let char = pop() else {
                 return discarding ? nil : popped
             }
-            popped.append(el)
+            popped.append(char)
         }
 
         return popped
     }
-
-    public var done: Bool {
-        return peek() == nil
-    }
 }
 
-public protocol _Character { var character: Character {get} }
-extension Character: _Character { public var character: Character { return self } }
-extension Reader where Element: _Character {
-    public func consume(using characterSet: [Character]) {
-        while let c = peek()?.character, characterSet.contains(c) {
-            pop()
-        }
+public extension Reader {
+    func consume(using characterSet: [Character]) {
+        consume(using: characterSet, upTo: -1)
     }
-    public func consume(using characterSet: [Character], upTo: Int) {
+
+    func consume(using characterSet: [Character], upTo: Int) {
         var upTo = upTo
-        while upTo > 0, let c = peek()?.character, characterSet.contains(c) {
+        while upTo != 0, let c = peek(), characterSet.contains(c) {
             upTo -= 1
             pop()
         }
-    }
-}
-
-extension String {
-    func reader() -> Reader<Character> {
-        return Reader(AnyIterator(characters.makeIterator()))
-    }
-}
-
-extension Sequence where Iterator.Element == Token {
-    func reader() -> Reader<Token> {
-        return Reader(AnyIterator(makeIterator()))
     }
 }

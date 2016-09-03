@@ -26,7 +26,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "1234567890", "Comment blocks should be removed from the template.")
@@ -38,7 +38,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "1234567890\n", "Multiline comments should be permitted.")
@@ -50,7 +50,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "Begin.\nEnd.\n", "All standalone comment lines should be removed.")
@@ -62,7 +62,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "Begin.\nEnd.\n", "All standalone comment lines should be removed.")
@@ -74,7 +74,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "|\r\n|", "\"\r\n\" should be considered a newline for standalone tags.")
@@ -86,7 +86,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "!", "Standalone tags should not require a newline to precede them.")
@@ -98,7 +98,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "!\n", "Standalone tags should not require a newline to follow them.")
@@ -110,7 +110,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "Begin.\nEnd.\n", "All standalone comment lines should be removed.")
@@ -122,7 +122,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "Begin.\nEnd.\n", "All standalone comment lines should be removed.")
@@ -134,7 +134,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "  12 \n", "Inline comments should not strip whitespace")
@@ -146,7 +146,7 @@ final class CommentsTests: XCTestCase {
         let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])
         let context = Context(from: contextJSON)
 
-        let ast = try compile(reader: parse(reader: template.reader()).reader())
+        let ast = try compile(tokens: AnyIterator(parse(reader: Reader(template)).makeIterator()))
         let rendered = render(ast: ast, context: context)
 
         XCTAssertEqual(rendered, "12345  67890", "Comment removal should preserve surrounding whitespace.")

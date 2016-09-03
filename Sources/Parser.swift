@@ -22,6 +22,7 @@ public func ==(lhs: Token, rhs: Token) -> Bool {
     case let (.variable(l), .variable(r)): return l == r
     case let (.openSection(l), .openSection(r)): return l == r
     case let (.closeSection(l), .closeSection(r)): return l == r
+    case let (.openInvertedSection(l), .openInvertedSection(r)): return l == r
     default: return false
     }
 }
@@ -31,9 +32,9 @@ struct ParserError: Error {
         case missingEndOfToken
         case unexpectedToken
     }
-    let reader: Reader<Character>
+    let reader: Reader
     let reason: Reason
-    init(reader: Reader<Character>, reason: Reason) {
+    init(reader: Reader, reason: Reason) {
         self.reader = reader
         self.reason = reason
         fatalError(String(describing: reason))
@@ -41,20 +42,24 @@ struct ParserError: Error {
 }
 
 protocol Parser {
-    static func matches(peeker: Peeker<Character>) -> Bool
-    static func parse(reader: Reader<Character>) throws -> Token
+    static func matches(peeker: Peeker) -> Bool
+    static func parse(reader: Reader) throws -> Token
 }
 
-let parsers: [Parser.Type] = [ExpressionParser.self, TextParser.self]
+let parsers: [Parser.Type] = [
+    ExpressionParser.self,
+    TextParser.self
+]
 
-public func parseOne(reader: Reader<Character>) throws -> Token {
+public func parseOne(reader: Reader) throws -> Token {
     for parser in parsers where parser.matches(peeker: reader) {
         return try parser.parse(reader: reader)
     }
-    fatalError("TextParser should always pick it up, worst case scenario")
+    // text parser should always pick it up
+    fatalError()
 }
 
-public func parse(reader: Reader<Character>) throws -> [Token] {
+public func parse(reader: Reader) throws -> [Token] {
     var tokens = [Token]()
 
     while !reader.done {
@@ -65,141 +70,53 @@ public func parse(reader: Reader<Character>) throws -> [Token] {
 }
 
 struct TextParser: Parser {
-    static func matches(peeker: Peeker<Character>) -> Bool {
+    static func matches(peeker: Peeker) -> Bool {
         return true
     }
-    static func parse(reader: Reader<Character>) throws -> Token {
+    static func parse(reader: Reader) throws -> Token {
         let text = reader.pop(upTo: ["{", "{"], discarding: false)!
         return .text(String(text))
     }
 }
 
-// all expressions start with {{
 struct ExpressionParser: Parser {
-    // order matters
-    static let parsers: [Parser.Type] = [
-        OpenSectionParser.self,
-        OpenInvertedSectionParser.self,
-        CloseSectionParser.self,
-        CommentParser.self,
-        VariableParser.self,
-    ]
-
-    static func matches(peeker: Peeker<Character>) -> Bool {
+    static func matches(peeker: Peeker) -> Bool {
         return peeker.peek(2) == ["{", "{"]
     }
-
-    static func parse(reader: Reader<Character>) throws -> Token {
-        // remove the leading braces
+    static func parse(reader: Reader) throws -> Token {
         precondition(reader.pop(2) == ["{", "{"])
+
         reader.consume(using: String.whitespaceAndNewLineCharacterSet)
 
-        for parser in parsers where parser.matches(peeker: reader) {
-            return try parser.parse(reader: reader)
+        guard
+            let char = reader.pop(),
+            let content = reader.pop(upTo: ["}", "}"])
+            else {
+            throw ParserError(reader: reader, reason: .missingEndOfToken)
         }
 
-        throw ParserError(reader: reader, reason: .unexpectedToken)
-    }
+        // closing braces
+        precondition(reader.pop(2) == ["}", "}"])
 
-    struct CommentParser: Parser {
-        static func matches(peeker: Peeker<Character>) -> Bool {
-            return peeker.peek() == "!"
-        }
-        static func parse(reader: Reader<Character>) throws -> Token {
-            precondition(reader.pop() == "!")
-
-            guard let _ = reader.pop(upTo: ["}", "}"]) else {
-                throw ParserError(reader: reader, reason: .missingEndOfToken)
-            }
-
-            // closing braces
-            precondition(reader.pop(2) == ["}", "}"])
-
+        switch char {
+        // comment
+        case "!":
             return .comment
-        }
-    }
 
-    struct VariableParser: Parser {
-        static func matches(peeker: Peeker<Character>) -> Bool {
-            return true
-        }
-        static func parse(reader: Reader<Character>) throws -> Token {
+        // open section
+        case "#":
+            return .openSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
 
-            guard let variable = reader.pop(upTo: ["}", "}"]) else {
-                throw ParserError(reader: reader, reason: .missingEndOfToken)
-            }
+        // open inverted section
+        case "^":
+            return .openInvertedSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
 
-            // closing braces
-            precondition(reader.pop(2) == ["}", "}"])
+        // close section
+        case "/":
+            return .closeSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
 
-            return .variable(String(variable).trim(using: String.whitespaceAndNewLineCharacterSet))
-        }
-    }
-
-    struct CloseSectionParser: Parser {
-        static func matches(peeker: Peeker<Character>) -> Bool {
-            return peeker.peek() == "/"
-        }
-        static func parse(reader: Reader<Character>) throws -> Token {
-            precondition(reader.pop() == "/")
-
-            guard let variable = reader.pop(upTo: ["}", "}"]) else {
-                throw ParserError(reader: reader, reason: .missingEndOfToken)
-            }
-
-            // closing braces
-            precondition(reader.pop(2) == ["}", "}"])
-
-            // pop trailing newline (if any)
-            // (by specification)
-            reader.consume(using: String.newLineCharacterSet, upTo: 1)
-
-            return .closeSection(variable: String(variable).trim(using: String.whitespaceAndNewLineCharacterSet))
-        }
-    }
-
-    struct OpenSectionParser: Parser {
-        static func matches(peeker: Peeker<Character>) -> Bool {
-            return peeker.peek() == "#"
-        }
-        static func parse(reader: Reader<Character>) throws -> Token {
-            precondition(reader.pop() == "#")
-
-            guard let variable = reader.pop(upTo: ["}", "}"]) else {
-                throw ParserError(reader: reader, reason: .missingEndOfToken)
-            }
-
-            // closing braces
-            precondition(reader.pop(2) == ["}", "}"])
-
-            // pop trailing newline (if any)
-            // (by specification)
-            reader.consume(using: String.newLineCharacterSet, upTo: 1)
-
-            return .openSection(variable: String(variable).trim(using: String.whitespaceAndNewLineCharacterSet))
-        }
-    }
-
-    struct OpenInvertedSectionParser: Parser {
-        static func matches(peeker: Peeker<Character>) -> Bool {
-            return peeker.peek() == "^"
-        }
-        static func parse(reader: Reader<Character>) throws -> Token {
-            precondition(reader.pop() == "^")
-
-            guard let variable = reader.pop(upTo: ["}", "}"]) else {
-                throw ParserError(reader: reader, reason: .missingEndOfToken)
-            }
-
-            // closing braces
-            precondition(reader.pop(2) == ["}", "}"])
-
-            // pop trailing newline (if any)
-            // (by specification)
-            reader.consume(using: String.newLineCharacterSet, upTo: 1)
-
-            return .openInvertedSection(variable: String(variable).trim(using: String.whitespaceAndNewLineCharacterSet))
-
+        default:
+            return .variable(String([char] + content).trim(using: String.whitespaceAndNewLineCharacterSet))
         }
     }
 }

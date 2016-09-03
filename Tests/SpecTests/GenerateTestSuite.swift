@@ -17,7 +17,7 @@ func generateTestCase(name: String, description: String, contextJSON: String, te
         "        let contextJSON = try JSONSerialization.jsonObject(with: contextJSONString.data(using: String.Encoding.utf8)!, options: [])",
         "        let context = Context(from: contextJSON)",
         "",
-        "        let ast = try compile(reader: parse(reader: template.reader()).reader())",
+        "        let ast = try compile(tokens: parse(reader: Reader(template))))",
         "        let rendered = render(ast: ast, context: context)",
         "",
         "        XCTAssertEqual(rendered, \"\(expected)\", \"\(description)\")",
@@ -89,4 +89,10 @@ func generateTestSuite(_ suite: String) throws -> String {
 
 func generateTestSuites() throws -> [String] {
     return try ["Sections", "Interpolation", "Inverted", "Comments"].map(generateTestSuite)
+}
+
+class GenerateTests: XCTestCase {
+    func testGenerate() throws {
+//        try generateTestSuites().forEach { print($0) }
+    }
 }

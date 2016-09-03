@@ -11,6 +11,12 @@ extension Array {
         guard !isEmpty else { return nil }
         return removeFirst()
     }
+    func element(at index: Index) -> Element? {
+        guard indices.contains(index) else {
+            return nil
+        }
+        return self[index]
+    }
 }
 
 extension AnyIterator where Element: Equatable {

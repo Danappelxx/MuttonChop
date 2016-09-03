@@ -15,7 +15,7 @@ class ParserTests: XCTestCase {
     func testSectionParsing() throws {
         // heavy whitespace to test robustness
         let string = "{{ #\nlocation }} {{  \n\t\r\n  location  \r\n\t\n  }} {{ \t/  location   }}"
-        let reader = string.reader()
+        let reader = Reader(string)
         let tokens = try parse(reader: reader)
         XCTAssertEqual(tokens.count, 5)
         XCTAssertEqual(tokens[0], .openSection(variable: "location"))
@@ -28,28 +28,35 @@ class ParserTests: XCTestCase {
     //MARK: single-token tests
     func testTextParser() throws {
         let string = "Hello, world!"
-        let reader = string.reader()
+        let reader = Reader(string)
         let token = try TextParser.parse(reader: reader)
         XCTAssertEqual(token, .text(string))
     }
 
     func testVariableParser() throws {
         let string = "{{ location }}"
-        let reader = string.reader()
+        let reader = Reader(string)
         let token = try ExpressionParser.parse(reader: reader)
         XCTAssertEqual(token, .variable("location"))
     }
 
     func testOpenSectionParser() throws {
         let string = "{{# location }}"
-        let reader = string.reader()
+        let reader = Reader(string)
         let token = try ExpressionParser.parse(reader: reader)
         XCTAssertEqual(token, .openSection(variable: "location"))
     }
 
+    func testOpenInvertedSectionParser() throws {
+        let string = "{{^ location }}"
+        let reader = Reader(string)
+        let token = try ExpressionParser.parse(reader: reader)
+        XCTAssertEqual(token, .openInvertedSection(variable: "location"))
+    }
+
     func testCloseSectionParser() throws {
         let string = "{{/ location }}"
-        let reader = string.reader()
+        let reader = Reader(string)
         let token = try ExpressionParser.parse(reader: reader)
         XCTAssertEqual(token, .closeSection(variable: "location"))
     }

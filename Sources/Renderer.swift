@@ -90,12 +90,30 @@ public enum Context {
 
 extension Sequence where Iterator.Element == Context {
     func value(of variable: String) -> Context? {
-        for context in self {
-            if let value = context.dictionary?[variable] {
-                return value
+        let components = variable.characters.split(separator: ".").map({ String($0) })
+
+        switch components.count {
+        case 1:
+            if variable == "." {
+                return self.first(where: { _ in true })
             }
+            for context in self {
+                if let value = context.dictionary?[variable] {
+                    return value
+                }
+            }
+            return nil
+
+        default:
+            var stack = Array(self)
+            for component in components {
+                guard let value = stack.value(of: component) else {
+                    return nil
+                }
+                stack = [value]
+            }
+            return stack.first
         }
-        return nil
     }
 }
 
