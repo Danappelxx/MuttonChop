@@ -1,17 +1,5 @@
 // MARK: Declarations
-public protocol Peeker {
-    func peek(_ n: Int) -> [Character]
-    func peek(_ n: Int, ignoring: [Character]) -> [Character]
-    func backPeek(_ n: Int) -> [Character]
-}
-
-public protocol Popper {
-    func pop(_ n: Int) -> [Character]
-    func pop(_ n: Int, ignoring: [Character]) -> [Character]
-    var done: Bool { get }
-}
-
-public final class Reader: Peeker, Popper {
+public final class Reader {
     fileprivate let iterator: AnyIterator<Character>
     fileprivate var lookahead = [Character]()
     fileprivate var lookbehind = [Character]()
@@ -64,8 +52,21 @@ public final class Reader: Peeker, Popper {
     }
 }
 
+// MARK: Line/column
+public extension Reader {
+    var lines: [[Character]] {
+        return self.lookbehind.split(separator: "\n", omittingEmptySubsequences: false).map(Array.init)
+    }
+    var line: Int {
+        return lines.count
+    }
+    var column: Int {
+        return lines.last?.count ?? 0
+    }
+}
+
 // MARK: Single peek/pop
-public extension Peeker {
+public extension Reader {
     func peek() -> Character? {
         return peek(1).first
     }
@@ -75,7 +76,7 @@ public extension Peeker {
     }
 }
 
-public extension Popper {
+public extension Reader {
     @discardableResult
     func pop() -> Character? {
         return pop(1).first
@@ -208,7 +209,7 @@ public extension Reader {
     }
 }
 
-public extension Popper where Self: Peeker {
+public extension Reader {
     func pop(upTo character: Character, discarding: Bool = true) -> [Character]? {
         return pop(upTo: [character], discarding: discarding)
     }
@@ -228,7 +229,7 @@ public extension Popper where Self: Peeker {
     }
 }
 
-public extension Popper where Self: Peeker {
+public extension Reader {
     func consume(using characterSet: [Character]) {
         consume(using: characterSet, upTo: -1)
     }

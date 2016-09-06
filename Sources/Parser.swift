@@ -29,7 +29,19 @@ public func ==(lhs: Token, rhs: Token) -> Bool {
     }
 }
 
-enum ParseError: Error {
+public struct SyntaxError: Error {
+    let line: Int
+    let column: Int
+    let reason: Reason
+
+    init(reader: Reader, reason: Reason) {
+        self.line = reader.line
+        self.column = reader.column
+        self.reason = reason
+    }
+}
+
+public enum Reason: Error {
     case missingEndOfToken
 }
 
@@ -42,17 +54,22 @@ final class Parser {
     }
 
     public func parse() throws -> [Token] {
+        do {
 
-        while !reader.done {
-            if reader.peek(2) == ["{", "{"] {
-                try tokens.append(parseExpression())
-                continue
+            while !reader.done {
+                if reader.peek(2) == ["{", "{"] {
+                    try tokens.append(parseExpression())
+                    continue
+                }
+
+                try tokens.append(parseText())
             }
 
-            try tokens.append(parseText())
-        }
+            return tokens
 
-        return tokens
+        } catch let reason as Reason {
+            throw SyntaxError(reader: reader, reason: reason)
+        }
     }
 
     func parseText() throws -> Token {
@@ -75,7 +92,7 @@ final class Parser {
             let char = reader.pop(),
             let content = reader.pop(upTo: ["}", "}"])
             else {
-                throw ParseError.missingEndOfToken
+                throw Reason.missingEndOfToken
         }
 
         // closing braces
@@ -137,7 +154,7 @@ final class Parser {
         case "{":
             // pop the third brace
             guard reader.pop() == "}" else {
-                throw ParseError.missingEndOfToken
+                throw Reason.missingEndOfToken
             }
             return .unescapedVariable(String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
 
