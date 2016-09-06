@@ -66,7 +66,7 @@ func generateTestSuite(_ suite: String) throws -> String {
             fatalError()
     }
     let data = try Data(contentsOf: file)
-    
+
     let json = try JSONSerialization.jsonObject(with: data, options: []) as! [String:Any]
     let overview = json["overview"]! as! String
     let tests = json["tests"]! as! [[String:Any]]

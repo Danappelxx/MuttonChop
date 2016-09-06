@@ -2,17 +2,16 @@
 public typealias AST = [ASTNode]
 public enum ASTNode: Equatable {
     case text(String)
-    case variable(String)
-    case partial(ast: AST)
-    case invertedSection(variable: String, ast: AST)
-    case section(variable: String, ast: AST)
+    case variable(String, escaped: Bool)
+    case partial(ast: AST, indentation: String)
+    case section(variable: String, inverted: Bool, ast: AST)
 }
 
 public func ==(lhs: ASTNode, rhs: ASTNode) -> Bool {
     switch (lhs, rhs) {
     case let (.text(l), .text(r)): return l == r
     case let (.variable(l), .variable(r)): return l == r
-    case let (.section(lv, li), .section(rv, ri)): return lv == rv && li == ri
+    case let (.section(la, lb, lc), .section(ra, rb, rc)): return la == ra && lb == rb && lc == rc
     default: return false
     }
 }
@@ -23,13 +22,14 @@ public enum CompilerError: Error {
 }
 
 public func compile(tokens: [Token], partials: [String:AST] = [:]) throws -> AST {
-    return try compile(tokens: AnyIterator(tokens.makeIterator()), partials: partials)
+    var index = 0
+    return try compile(tokens: tokens, index: &index, partials: partials)
 }
 
-public func compile(tokens: AnyIterator<Token>, partials: [String:AST] = [:], openToken: Token? = nil) throws -> AST {
+public func compile(tokens: [Token], index: inout Int, partials: [String:AST] = [:], openToken: Token? = nil) throws -> AST {
     var ast = AST()
-
-    while let token = tokens.next() {
+    while let token = tokens.element(at: index) {
+        defer { index += 1 }
         switch token {
         case .comment:
             break
@@ -38,19 +38,22 @@ public func compile(tokens: AnyIterator<Token>, partials: [String:AST] = [:], op
             ast.append(.text(text))
 
         case let .variable(variable):
-            ast.append(.variable(variable))
+            ast.append(.variable(variable, escaped: true))
+        case let .unescapedVariable(variable):
+            ast.append(.variable(variable, escaped: false))
 
-        case let .partial(partial):
-            guard let partialAST = partials[partial] else {
+        case let .partial(partial, indentation):
+            guard let partial = partials[partial] else {
                 break
             }
-            ast.append(.partial(ast: partialAST))
+
+            ast.append(.partial(ast: partial, indentation: indentation))
 
         // nested section, recurse
-        case .openSection:
-            try ast.append(contentsOf: compile(tokens: tokens, openToken: token))
-        case .openInvertedSection:
-            try ast.append(contentsOf: compile(tokens: tokens, openToken: token))
+        case .openSection, .openInvertedSection:
+            index += 1
+            try ast.append(contentsOf: compile(tokens: tokens, index: &index, partials: partials, openToken: token))
+            index -= 1
 
         case let .closeSection(variable):
 
@@ -62,18 +65,14 @@ public func compile(tokens: AnyIterator<Token>, partials: [String:AST] = [:], op
             // finished section - make sure it has the same contents
             switch openToken {
 
-            case let .openSection(openVariable):
+            case let .openSection(openVariable),
+                 let .openInvertedSection(openVariable):
                 guard openVariable == variable else {
                     throw CompilerError.badSectionIdentifier(got: variable, expected: openVariable)
                 }
-                return [.section(variable: openVariable, ast: ast)]
+                return [.section(variable: openVariable, inverted: openToken == .openInvertedSection(variable: openVariable), ast: ast)]
 
-            case let .openInvertedSection(openVariable):
-                guard openVariable == variable else {
-                    throw CompilerError.badSectionIdentifier(got: variable, expected: openVariable)
-                }
-                return [.invertedSection(variable: openVariable, ast: ast)]
-
+            // TODO: handle properly
             default: fatalError()
             }
         }

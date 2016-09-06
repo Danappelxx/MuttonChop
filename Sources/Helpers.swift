@@ -11,11 +11,32 @@ extension Array {
         guard !isEmpty else { return nil }
         return removeFirst()
     }
+}
+
+extension Array {
     func element(at index: Index) -> Element? {
         guard indices.contains(index) else {
             return nil
         }
         return self[index]
+    }
+    func elements(in range: CountableRange<Int>) -> [Element]? {
+        guard indices.contains(range.lowerBound), indices.contains(range.upperBound - 1) else {
+            return nil
+        }
+        return Array(self[range])
+    }
+}
+
+extension Dictionary {
+    func mapValues<T>(_ transform: (Value) -> T) -> [Key: T] {
+        var dictionary: [Key: T] = [:]
+
+        for (key, value) in self {
+            dictionary[key] = transform(value)
+        }
+
+        return dictionary
     }
 }
 
@@ -33,7 +54,7 @@ extension AnyIterator where Element: Equatable {
 }
 
 extension String {
-    static let newLineCharacterSet: [Character] = ["\n", "\r\n"]
+    static let newLineCharacterSet: [Character] = ["\n", "\r", "\r\n"]
     static let whitespaceCharacterSet: [Character] = [" ", "\t"]
     static let whitespaceAndNewLineCharacterSet: [Character] = whitespaceCharacterSet + newLineCharacterSet
 
@@ -55,7 +76,7 @@ extension String {
     }
 
     func trimRight(using characterSet: [Character]) -> String {
-        var end = 0
+        var end = characters.count
 
         for (index, character) in characters.reversed().enumerated() {
             if !characterSet.contains(character) {

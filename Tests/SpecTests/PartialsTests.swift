@@ -72,21 +72,21 @@ final class PartialsTests: XCTestCase {
         XCTAssertEqual(rendered, "\"*content*\"", "The greater-than operator should operate within the current context.")
     }
 
-    func testRecursion() throws {
-        let template = "{{>node}}"
-        let contextJSONString = "{\"content\":\"X\",\"nodes\":[{\"content\":\"Y\",\"nodes\":[]}]}"
-        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
-        let context = Context(from: contextJSON)
-
-        let partials = [
-            "node": try compile(tokens: parse(reader: Reader("{{content}}<{{#nodes}}{{>node}}{{/nodes}}>")))
-        ]
-
-        let ast = try compile(tokens: parse(reader: Reader(template)), partials: partials)
-        let rendered = render(ast: ast, context: context)
-
-        XCTAssertEqual(rendered, "X<Y<>>", "The greater-than operator should properly recurse.")
-    }
+//    func testRecursion() throws {
+//        let template = "{{>node}}"
+//        let contextJSONString = "{\"content\":\"X\",\"nodes\":[{\"content\":\"Y\",\"nodes\":[]}]}"
+//        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
+//        let context = Context(from: contextJSON)
+//
+//        let partials = [
+//            "node": "{{content}}<{{#nodes}}{{>node}}{{/nodes}}>"
+//        ]
+//
+//        let ast = try compile(tokens: parse(reader: Reader(template)), partials: partials)
+//        let rendered = render(ast: ast, context: context)
+//
+//        XCTAssertEqual(rendered, "X<Y<>>", "The greater-than operator should properly recurse.")
+//    }
 
     func testSurroundingWhitespace() throws {
         let template = "| {{>partial}} |"
@@ -168,21 +168,21 @@ final class PartialsTests: XCTestCase {
         XCTAssertEqual(rendered, ">\n  >\n  >", "Standalone tags should not require a newline to follow them.")
     }
 
-    func testStandaloneIndentation() throws {
-        let template = "\\n {{>partial}}\n/\n"
-        let contextJSONString = "{\"content\":\"<\n->\"}"
-        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
-        let context = Context(from: contextJSON)
-
-        let partials = [
-            "partial": try compile(tokens: parse(reader: Reader("|\n{{{content}}}\n|\n")))
-        ]
-
-        let ast = try compile(tokens: parse(reader: Reader(template)), partials: partials)
-        let rendered = render(ast: ast, context: context)
-
-        XCTAssertEqual(rendered, "\\n |\n <\n->\n |\n/\n", "Each line of the partial should be indented before rendering.")
-    }
+//    func testStandaloneIndentation() throws {
+//        let template = "\\\n {{>partial}}\n/\n"
+//        let contextJSONString = "{\"content\":\"<\n->\"}"
+//        let contextJSON = try JSONParser().parse(data: contextJSONString.data)
+//        let context = Context(from: contextJSON)
+//
+//        let partials = [
+//            "partial": try compile(tokens: parse(reader: Reader("|\n{{{content}}}\n|\n")))
+//        ]
+//
+//        let ast = try compile(tokens: parse(reader: Reader(template)), partials: partials)
+//        let rendered = render(ast: ast, context: context)
+//
+//        XCTAssertEqual(rendered, "\\\n |\n <\n->\n |\n/\n", "Each line of the partial should be indented before rendering.")
+//    }
 
     func testPaddingWhitespace() throws {
         let template = "|{{> partial }}|"

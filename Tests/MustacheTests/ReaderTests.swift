@@ -18,10 +18,34 @@ class ReaderTests: XCTestCase {
         XCTAssertEqual(reader.pop(), "H")
         XCTAssertEqual(reader.pop(3), ["e", "l", "l"])
         XCTAssertEqual(reader.backPeek(3), ["e", "l", "l"])
+
         guard let popped = reader.pop(upTo: ["o", "r"]) else {
             return XCTFail("pop(upTo:) returned nil")
         }
         XCTAssertEqual(popped, ["o", ",", " ", "w"])
+
+        guard let peeked = reader.peek(upTo: ["d", "!"]) else {
+            return XCTFail("peek(upTo:) returned nil")
+        }
+        XCTAssertEqual(peeked, ["o", "r", "l"])
+
+        guard let peeked2 = reader.peek(upToAnyOf: String.whitespaceAndNewLineCharacterSet + ["!"]) else {
+            return XCTFail("peek(upTo:) returned nil")
+        }
+        XCTAssertEqual(peeked2, ["o", "r", "l", "d"])
+
+        guard let peeked3 = reader.backPeek(upTo: ["l", "l", "o"]) else {
+            return XCTFail("backPeek(upTo:) returned nil")
+        }
+        XCTAssertEqual(peeked3, [",", " ", "w"])
+
+        reader.pop(10)
+        XCTAssertTrue(reader.done)
+
+        guard let peeked4 = reader.backPeek(upToAnyOf: String.whitespaceAndNewLineCharacterSet) else {
+            return XCTFail("backPeek(upToAnyOf:) returned nil")
+        }
+        XCTAssertEqual(peeked4, ["w", "o", "r", "l", "d", "!"])
     }
 
     func testPeekingPoppingIgnoring() {

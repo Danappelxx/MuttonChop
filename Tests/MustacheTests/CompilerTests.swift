@@ -10,24 +10,16 @@ import XCTest
 @testable import Mustache
 
 class CompilerTests: XCTestCase {
-//    func testWhitespace1() throws {
-//        let template = "* one\n* two\n  {{#three}}\n* {{three}}\n{{/three}}a"
-//        let context = Context.dictionary(["three": .string("three")])
-//        let tokens = try parse(reader: Reader(template))
-//        let ast = try compile(tokens: tokens)
-//        let rendered = render(ast: ast, context: context)
-//        XCTAssertEqual(rendered, "* one\n* two\n* three\na")
-//    }
-    func testWhitespace2() throws {
-        let template = "* one\n* two\n  {{#three}}  \n* {{three}}\n{{/three}}a"
+    func testWhitespace() throws {
+        let template = "* one\n* two\n  {{#three}}\n* {{three}}\n{{/three}}a"
         let context = Context.dictionary(["three": .string("three")])
         let tokens = try parse(reader: Reader(template))
-        let ast = try compile(tokens: AnyIterator(tokens.makeIterator()))
+        let ast = try compile(tokens: tokens)
         let rendered = render(ast: ast, context: context)
-        XCTAssertEqual(rendered, "* one\n* two\n    \n* three\na")
+        XCTAssertEqual(rendered, "* one\n* two\n* three\na")
     }
 
-    func testCompiling() throws {
+    func testCompilingSections() throws {
         // equivalent to "Hello, {{# location }} {{ location }} {{/ location }}!"
         let tokens: [Token] = [
             .text("Hello, "),
@@ -38,13 +30,13 @@ class CompilerTests: XCTestCase {
             .closeSection(variable: "location"),
             .text("!")
         ]
-        let ast = try compile(tokens: AnyIterator(tokens.makeIterator()))
+        let ast = try compile(tokens: tokens)
 
         XCTAssertEqual(ast.count, 3)
         XCTAssertEqual(ast[0], .text("Hello, "))
-        XCTAssertEqual(ast[1], .section(variable: "location", ast: [
+        XCTAssertEqual(ast[1], .section(variable: "location", inverted: false, ast: [
             .text(" "),
-            .variable("location"),
+            .variable("location", escaped: true),
             .text(" "),
         ]))
         XCTAssertEqual(ast[2], .text("!"))

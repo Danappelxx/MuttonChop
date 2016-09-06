@@ -65,7 +65,7 @@ final class InterpolationTests: XCTestCase {
 
     func testHTMLEscaping() throws {
         let template = "These characters should be HTML escaped: {{forbidden}}\n"
-        let contextJSONString = "{\"forbidden\":\"& \" < >\"}"
+        let contextJSONString = "{\"forbidden\":\"& \\\" < >\"}"
         let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
@@ -77,7 +77,7 @@ final class InterpolationTests: XCTestCase {
 
     func testTripleMustache() throws {
         let template = "These characters should not be HTML escaped: {{{forbidden}}}\n"
-        let contextJSONString = "{\"forbidden\":\"& \" < >\"}"
+        let contextJSONString = "{\"forbidden\":\"& \\\" < >\"}"//"{\"forbidden\":\"& \" < >\"}"
         let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 
@@ -89,7 +89,7 @@ final class InterpolationTests: XCTestCase {
 
     func testAmpersand() throws {
         let template = "These characters should not be HTML escaped: {{&forbidden}}\n"
-        let contextJSONString = "{\"forbidden\":\"& \" < >\"}"
+        let contextJSONString = "{\"forbidden\":\"& \\\" < >\"}"
         let contextJSON = try JSONParser().parse(data: contextJSONString.data)
         let context = Context(from: contextJSON)
 

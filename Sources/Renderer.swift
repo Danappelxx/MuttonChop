@@ -85,38 +85,51 @@ func render(ast: AST, contextStack: [Context]) -> String {
         case let .text(text):
             out += text
 
-        case let .variable(variable):
+        case let .variable(variable, escaped):
             if let variable = contextStack.value(of: variable)?.asString() {
-                out += variable
+                switch escaped {
+                case true: out += escapeHTML(variable)
+                case false: out += variable
+
+                }
             }
 
-        case let .section(variable, innerAST):
-            guard
-                let innerContext = contextStack.value(of: variable), innerContext.isTruthy
-                else {
-                continue
+        case let .section(variable, inverted, innerAST):
+            let truthyContext: Context? = {
+                guard let context = contextStack.value(of: variable), context.isTruthy else {
+                    return nil
+                }
+                return context
+            }()
+
+            switch inverted {
+            case true:
+                if truthyContext == nil {
+                    out += render(ast: innerAST, contextStack: contextStack)
+                }
+            case false:
+                guard let context = truthyContext else {
+                    break
+                }
+                if case let .array(innerContexts) = context {
+                    out += innerContexts.map { render(ast: innerAST, contextStack: [$0] + contextStack) }.joined(separator: "")
+                } else {
+                    out += render(ast: innerAST, contextStack: [context] + contextStack)
+                }
             }
 
-            if case let .array(innerContexts) = innerContext {
-                out += innerContexts.map { render(ast: innerAST, contextStack: [$0] + contextStack) }.joined(separator: "")
-            } else {
-                out += render(ast: innerAST, contextStack: [innerContext] + contextStack)
+        case let .partial(partial, indentation):
+            let partial = partial.map { node -> ASTNode in
+                guard case let .text(text) = node else {
+                    return node
+                }
+
+                // add indentation to each newline
+                return .text(text.characters.split(separator: "\n", omittingEmptySubsequences: false).map(String.init(_:))
+                    .map { line in line.characters.isEmpty ? line : indentation + line }
+                    .joined(separator: "\n"))
             }
 
-        case let .invertedSection(variable, innerAST):
-            switch contextStack.value(of: variable) {
-
-            // if there is a value and its truthy, don't render
-            case let .some(innerContext) where innerContext.isTruthy:
-                continue
-
-            // if no value, render
-            // if yes value but falsey, render
-            case .none, .some:
-                out += render(ast: innerAST, contextStack: contextStack)
-            }
-
-        case let .partial(partial):
             out += render(ast: partial, contextStack: contextStack)
         }
     }

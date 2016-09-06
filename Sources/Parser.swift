@@ -4,6 +4,8 @@ public enum Token: Equatable {
     case text(String)
     // {{ variable }}
     case variable(String)
+    // {{{ variable }}}
+    case unescapedVariable(String)
     // {{! comment }}
     case comment
     // {{# variable }}
@@ -13,7 +15,7 @@ public enum Token: Equatable {
     // {{/ variable }}
     case closeSection(variable: String)
     // {{> partial }}
-    case partial(String)
+    case partial(String, indentation: String)
 }
 
 public func ==(lhs: Token, rhs: Token) -> Bool {
@@ -31,63 +33,125 @@ enum ParseError: Error {
     case missingEndOfToken
 }
 
-public func parse(reader: Reader) throws -> [Token] {
-    var tokens = [Token]()
+final class Parser {
+    private var tokens = [Token]()
+    private let reader: Reader
 
-    while !reader.done {
-        if reader.peek(2) == ["{", "{"] {
-            try tokens.append(parseExpression(reader: reader))
-            continue
+    init(reader: Reader) {
+        self.reader = reader
+    }
+
+    public func parse() throws -> [Token] {
+
+        while !reader.done {
+            if reader.peek(2) == ["{", "{"] {
+                try tokens.append(parseExpression())
+                continue
+            }
+
+            try tokens.append(parseText())
         }
 
-        try tokens.append(parseText(reader: reader))
+        return tokens
     }
 
-    return tokens
+    func parseText() throws -> Token {
+        let text = reader.pop(upTo: ["{", "{"], discarding: false)!
+        return .text(String(text))
+    }
+
+    func parseExpression() throws -> Token {
+        // whitespace up to newline before the tag
+        // nil = not only whitespace
+        let leading = reader.leadingWhitespace()
+
+        // opening braces
+        precondition(reader.pop(2) == ["{", "{"])
+
+        reader.consume(using: String.whitespaceAndNewLineCharacterSet)
+
+        // char = token type
+        guard
+            let char = reader.pop(),
+            let content = reader.pop(upTo: ["}", "}"])
+            else {
+                throw ParseError.missingEndOfToken
+        }
+
+        // closing braces
+        precondition(reader.pop(2) == ["}", "}"])
+
+        // whitespace up to newline after the tag
+        // nil = not only whitespace
+        let trailing = reader.trailingWhitespace()
+
+        func stripIfStandalone() {
+            // if just whitespace until newline on both sides, tag is standalone
+            guard let _ = leading, let trailing = trailing else {
+                return
+            }
+
+            // get rid of trailing whitespace
+            reader.pop(trailing.count)
+            // get rid of newline
+            reader.consume(using: String.newLineCharacterSet, upTo: 1)
+
+            // get the token before it (should be text)
+            if case let .text(prev)? = tokens.last {
+                // get rid of trailing whitespace on that token
+                let newText = prev.trimRight(using: String.whitespaceCharacterSet)
+                // put it back in
+                tokens[tokens.endIndex - 1] = .text(newText)
+            }
+        }
+
+        switch char {
+
+        // comment
+        case "!":
+            defer { stripIfStandalone() }
+            return .comment
+
+        // open section
+        case "#":
+            defer { stripIfStandalone() }
+            return .openSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+
+        // open inverted section
+        case "^":
+            defer { stripIfStandalone() }
+            return .openInvertedSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+
+        // close section
+        case "/":
+            defer { stripIfStandalone() }
+            return .closeSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+
+        // partial
+        case ">":
+            defer { stripIfStandalone() }
+            let indentation = leading.map(String.init(_:)) ?? ""
+            return .partial(String(content).trim(using: String.whitespaceAndNewLineCharacterSet), indentation: indentation)
+
+        // unescaped variable
+        case "{":
+            // pop the third brace
+            guard reader.pop() == "}" else {
+                throw ParseError.missingEndOfToken
+            }
+            return .unescapedVariable(String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+
+        // unescaped variable
+        case "&":
+            return .unescapedVariable(String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+
+        // normal variable
+        default:
+            return .variable(String([char] + content).trim(using: String.whitespaceAndNewLineCharacterSet))
+        }
+    }
 }
 
-func parseText(reader: Reader) throws -> Token {
-    let text = reader.pop(upTo: ["{", "{"], discarding: false)!
-    return .text(String(text))
-}
-
-func parseExpression(reader: Reader) throws -> Token {
-    precondition(reader.pop(2) == ["{", "{"])
-
-    reader.consume(using: String.whitespaceAndNewLineCharacterSet)
-
-    guard
-        let char = reader.pop(),
-        let content = reader.pop(upTo: ["}", "}"])
-        else {
-            throw ParseError.missingEndOfToken
-    }
-
-    // closing braces
-    precondition(reader.pop(2) == ["}", "}"])
-
-    switch char {
-    // comment
-    case "!":
-        return .comment
-
-    // open section
-    case "#":
-        return .openSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
-
-    // open inverted section
-    case "^":
-        return .openInvertedSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
-
-    // close section
-    case "/":
-        return .closeSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
-
-    // partial
-    case ">":
-        return .partial(String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
-
-    default:
-        return .variable(String([char] + content).trim(using: String.whitespaceAndNewLineCharacterSet))
-    }
+public func parse(reader: Reader) throws -> [Token] {
+    return try Parser(reader: reader).parse()
 }
