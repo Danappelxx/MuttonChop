@@ -1,5 +1,5 @@
 # MuttonChop
-> A Mutton Chop is synonymous to Sideburns. Sideburns are kind of similar to Mustaches.
+> Mutton Chops are synonymous to Sideburns. Sideburns are kind of similar to Mustaches.
 
 Mustache templates in Swift. Mostly spec compliant (see [Spec Compliance](#spec-compliance)). OSX and Linux supported.
 
@@ -10,7 +10,7 @@ Under construction...
 Under construction...
 
 # Installation
-```
+```swift
 import PackageDescription
 
 let package = Package(
