@@ -1,13 +1,13 @@
 //
 //  InterpolationTests.swift
-//  Mustache
+//  SpecTests
 //
 //  Created by Dan Appel on 8/31/16.
 //  Copyright © 2016 dvappel. All rights reserved.
 //
 
 import XCTest
-@testable import Mustache
+@testable import MuttonChop
 import JSON
 
 /**
