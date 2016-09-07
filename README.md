@@ -51,6 +51,12 @@ let rendered = template.render(with: context)
 print(rendered) // -> Hello, Dan!
 ```
 
+## Tags
+
+## Variables (Interpolation)
+
+Under construction...
+
 ## Sections
 
 Under construction...
