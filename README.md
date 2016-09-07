@@ -10,7 +10,7 @@ Still an intense work in progress.
 
 # Features
 
-MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/spec). The only exception is [recursive partials](https://github.com/Danappelxx/MuttonChop/blob/master/Tests/SpecTests/SpecTests.swift#L1253-L1266), which are not supported due to the fact that MuttonChop compiles all of its templates ahead of time, making infinite recursion impossible to resolve.
+MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/spec). The only exception is [recursive partials](https://github.com/Danappelxx/MuttonChop/blob/b9a1e99ed27ee81cd2dfd24173dc6857c875bbcc/Tests/SpecTests/SpecTests.swift#L1253-L1266), which are not supported due to the fact that MuttonChop compiles all of its templates ahead of time, making infinite recursion impossible to resolve.
 
 More features (inheritance, etc.) are coming soon! Do keep your eyes open.
 
@@ -79,7 +79,7 @@ Parsing is slow and unoptimized. Rendering is fast and optimized. Take advantage
 
 # Support
 
-If you need any help; feel free to email me, make an issue, or talk to me at the [Zewo Slack][slack-url].
+If you need any help; feel free to email me, make an issue, or talk to me at the [Zewo Slack](http://slack.zewo.io).
 
 # Contributing
 
