@@ -1,12 +1,14 @@
 # MuttonChop
 
+[![Swift][swift-badge]][platform-url] [![Platform][platform-badge]][platform-url] [![License][mit-badge]][mit-url] [![Travis][travis-badge]][travis-url] [![Codebeat][codebeat-badge]][codebeat-url]
+
 > Mutton Chops are synonymous to Sideburns. Sideburns are kind of similar to Mustaches.
 
 Mustache templates in Swift. 99% spec compliant. OSX and Linux supported.
 
 # Features
 
-MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/spec). The only exception is [recursive partials](https://github.com/Danappelxx/MuttonChop/blob/master/Tests/SpecTests/SpecTests.swift#L1253-L1266), which are not supported due to the fact that MuttonChop compiles all of its templates ahead of time, making infinite recursion impossible to resolve.
+MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/specs). The only exception is [recursive partials](https://github.com/Danappelxx/MuttonChop/blob/master/Tests/SpecTests/SpecTests.swift#L1253-L1266), which are not supported due to the fact that MuttonChop compiles all of its templates ahead of time, making infinite recursion impossible to resolve.
 
 More features (inheritance, etc.) are coming soon! Do keep your eyes open.
 
@@ -55,7 +57,7 @@ print(rendered) // -> Hello, Dan!
 
 ## Variables (Interpolation)
 
-Under construction...
+Under construction... g
 
 ## Sections
 
@@ -75,7 +77,7 @@ Parsing is slow and unoptimized. Rendering is fast and optimized. Take advantage
 
 # Support
 
-If you need any help; feel free to email me, make an issue, or talk to me at the [Zewo Slack](http://slack.zewo.io).
+If you need any help; feel free to email me, make an issue, or talk to me at the [Zewo Slack][slack-url].
 
 # Contributing
 
@@ -84,3 +86,14 @@ Any and all help is very welcome, I promise I won't bite. Contributing is more t
 # License
 
 MIT - more information is in the LICENSE file.
+
+[codebeat-badge]: https://codebeat.co/badges/102d7671-84ec-4af2-b82c-b64844ad5e2b
+[codebeat-url]: https://codebeat.co/projects/github-com-danappelxx-muttonchop
+[mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg?style=flat
+[mit-url]: https://tldrlegal.com/license/mit-license
+[platform-badge]: https://img.shields.io/badge/Platforms-OS%20X%20--%20Linux-lightgray.svg?style=flat
+[platform-url]: https://swift.org
+[swift-badge]: https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat
+[swift-url]: https://swift.org
+[travis-badge]: https://travis-ci.org/Danappelxx/MuttonChop.svg?branch=master
+[travis-url]: https://travis-ci.org/Danappelxx/MuttonChop
