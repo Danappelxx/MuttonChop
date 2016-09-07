@@ -6,10 +6,10 @@ XCTMain([
     testCase(ReaderTests.allTests),
     testCase(ParserTests.allTests),
     testCase(CompilerTests.allTests),
+    testCase(TemplateTests.allTests),
 
     testCase(CommentsTests.allTests),
-    testCase(DelimiterTests.allTests),
-    testCase(ReaderTests.allTests),
+    testCase(DelimitersTests.allTests),
     testCase(InterpolationTests.allTests),
     testCase(InvertedTests.allTests),
     testCase(PartialsTests.allTests),

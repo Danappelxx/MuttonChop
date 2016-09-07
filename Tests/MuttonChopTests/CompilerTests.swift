@@ -10,6 +10,13 @@ import XCTest
 @testable import MuttonChop
 
 class CompilerTests: XCTestCase {
+    static var allTests: [(String, (CompilerTests) -> () throws -> Void)] {
+        return [
+            ("testWhitespace", testWhitespace),
+            ("testCompilingSections", testCompilingSections),
+        ]
+    }
+
     func testWhitespace() throws {
         let template = "* one\n* two\n  {{#three}}\n* {{three}}\n{{/three}}a"
         let context: StructuredData = ["three": "three"]

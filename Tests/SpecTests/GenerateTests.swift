@@ -9,6 +9,9 @@
 import XCTest
 import JSON
 @testable import MuttonChop
+#if os(Linux)
+    import Glibc
+#endif
 
 extension Context {
     init(from json: String) throws {
@@ -41,8 +44,60 @@ extension Context {
     }
 }
 
+#if os(OSX)
+struct Test {
+    let name: String
+    let description: String
+    let partials: [String:String]?
+    let contextJSON: String
+    let template: String
+    let expected: String
+
+    init(json: JSON) throws {
+        name = try (json.get("name") as String)
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "-", with: "_")
+            .replacingOccurrences(of: "(", with: "_")
+            .replacingOccurrences(of: ")", with: "")
+
+        description = try (json.get("desc") as String)
+            .replacingOccurrences(of: "\\\"", with: "\"")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+
+        partials = try json["partials"]?.asDictionary()
+            .mapValues { try $0.asString() }
+            .mapValues { $0
+                .replacingOccurrences(of: "\\\"", with: "\"")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+                .replacingOccurrences(of: "\t", with: "\\t")
+                .replacingOccurrences(of: "\r", with: "\\r")
+                .replacingOccurrences(of: "\n", with: "\\n") }
+
+        contextJSON = try JSONSerializer().serializeToString(json: .object(json.get("data")))
+            .replacingOccurrences(of: "\\\"", with: "\"")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\t", with: "\\t")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\n", with: "\\n")
+
+        template = try (json.get("template") as String)
+            .replacingOccurrences(of: "\\\"", with: "\"")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\t", with: "\\t")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\n", with: "\\n")
+
+        expected = try (json.get("expected") as String)
+            .replacingOccurrences(of: "\\\"", with: "\"")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\t", with: "\\t")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\n", with: "\\n")
+    }
+}
+
 class GenerateTests: XCTestCase {
-    let enabled = false
+    let enabled = true
     let suites = ["Sections", "Interpolation", "Inverted", "Comments", "Partials", "Delimiters"]
 
     func testGenerate() throws {
@@ -67,84 +122,55 @@ class GenerateTests: XCTestCase {
 
         let json = try JSONParser().parse(data: C7.Data(Array(data)))
         let overview = try json.get("overview") as String
-        let tests = try json.get("tests") as [JSON]
+        let testsJSON = try json.get("tests") as [JSON]
 
-        let generated = try tests.map { test in
+        let tests = try testsJSON.map(Test.init)
+        let testCases = tests.map(generateTestCase)
 
-            let name = try (test.get("name") as String)
-                .replacingOccurrences(of: " ", with: "")
-                .replacingOccurrences(of: "-", with: "_")
-                .replacingOccurrences(of: "(", with: "_")
-                .replacingOccurrences(of: ")", with: "")
-
-            let description = try (test.get("desc") as String)
-                .replacingOccurrences(of: "\\\"", with: "\"")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-
-            let partials = try test["partials"]?.asDictionary()
-                .mapValues { try $0.asString() }
-                .mapValues { $0
-                    .replacingOccurrences(of: "\\\"", with: "\"")
-                    .replacingOccurrences(of: "\"", with: "\\\"")
-                    .replacingOccurrences(of: "\t", with: "\\t")
-                    .replacingOccurrences(of: "\r", with: "\\r")
-                    .replacingOccurrences(of: "\n", with: "\\n") }
-
-            let contextJSON = try JSONSerializer().serializeToString(json: .object(test.get("data")))
-                .replacingOccurrences(of: "\\\"", with: "\"")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-                .replacingOccurrences(of: "\t", with: "\\t")
-                .replacingOccurrences(of: "\r", with: "\\r")
-                .replacingOccurrences(of: "\n", with: "\\n")
-
-            let template = try (test.get("template") as String)
-                .replacingOccurrences(of: "\\\"", with: "\"")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-                .replacingOccurrences(of: "\t", with: "\\t")
-                .replacingOccurrences(of: "\r", with: "\\r")
-                .replacingOccurrences(of: "\n", with: "\\n")
-
-            let expected = try (test.get("expected") as String)
-                .replacingOccurrences(of: "\\\"", with: "\"")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-                .replacingOccurrences(of: "\t", with: "\\t")
-                .replacingOccurrences(of: "\r", with: "\\r")
-                .replacingOccurrences(of: "\n", with: "\\n")
-
-            return generateTestCase(name: name, description: description, contextJSON: contextJSON, template: template, expected: expected, partials: partials)
-        } as [String]
+        let allTests = [
+            "    static var allTests: [(String, (\(suite)Tests) -> () throws -> Void)] {",
+            "        return [",
+            (tests.map { test in
+            "            (\"test\(test.name)\", test\(test.name)),"
+            }.joined(separator: "\n")),
+            "        ]",
+            "    }"
+        ].joined(separator: "\n")
 
         return [
             "/**",
             "\(overview)",
             " */",
             "final class \(suite)Tests: XCTestCase {",
-            generated.joined(separator: "\n\n"),
+            allTests,
+            "",
+            testCases.joined(separator: "\n\n"),
             "}",
         ].joined(separator: "\n")
     }
 
-    func generateTestCase(name: String, description: String, contextJSON: String, template: String, expected: String, partials: [String:String]? = nil) -> String {
+    func generateTestCase(test: Test) -> String {
         return [
-            "    func test\(name)() throws {",
-            "        let templateString = \"\(template)\"",
-            "        let contextJSON = \"\(contextJSON)\"",
-            "        let expected = \"\(expected)\"",
-            (partials?.isEmpty ?? true
+            "    func test\(test.name)() throws {",
+            "        let templateString = \"\(test.template)\"",
+            "        let contextJSON = \"\(test.contextJSON)\"",
+            "        let expected = \"\(test.expected)\"",
+            (test.partials?.isEmpty ?? true
                 ? ""
-                : "        let partials = try [\n" + partials!.map { key, value in
+                : "        let partials = try [\n" + test.partials!.map { key, value in
                     "            \"\(key)\": Template(\"\(value)\")"
                     }.joined(separator: ",\n") + "\n        ]\n"
             ),
             "        let context = try Context(from: contextJSON)",
-            (partials?.isEmpty ?? true
+            (test.partials?.isEmpty ?? true
                 ? "        let template = try Template(templateString)"
                 : "        let template = try Template(templateString, partials: partials)"
             ),
             "        let rendered = template.render(with: context)",
             "",
-            "        XCTAssertEqual(rendered, expected, \"\(description)\")",
+            "        XCTAssertEqual(rendered, expected, \"\(test.description)\")",
             "    }",
         ].joined(separator: "\n")
     }
 }
+#endif

@@ -10,6 +10,16 @@ import XCTest
 @testable import MuttonChop
 
 class ParserTests: XCTestCase {
+    static var allTests: [(String, (ParserTests) -> () throws -> Void)] {
+        return [
+            ("testSectionParsing", testSectionParsing),
+            ("testTextParser", testTextParser),
+            ("testVariableParser", testVariableParser),
+            ("testOpenSectionParser", testOpenSectionParser),
+            ("testOpenInvertedSectionParser", testOpenInvertedSectionParser),
+            ("testCloseSectionParser", testCloseSectionParser),
+        ]
+    }
 
     //MARK: multi-token tests
     func testSectionParsing() throws {

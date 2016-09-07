@@ -10,6 +10,14 @@ import XCTest
 @testable import MuttonChop
 
 class ReaderTests: XCTestCase {
+    static var allTests: [(String, (ReaderTests) -> () throws -> Void)] {
+        return [
+            ("testPeekingPopping", testPeekingPopping),
+            ("testPeekingPoppingIgnoring", testPeekingPoppingIgnoring),
+            ("testWhitespace", testWhitespace),
+        ]
+    }
+
     func testPeekingPopping() {
         let string = "Hello, world!"
         let reader = Reader(string)

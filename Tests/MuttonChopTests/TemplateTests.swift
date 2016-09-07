@@ -10,6 +10,15 @@ import XCTest
 @testable import MuttonChop
 
 class TemplateTests: XCTestCase {
+    static var allTests: [(String, (TemplateTests) -> () throws -> Void)] {
+        return [
+            ("testPipeline", testPipeline),
+            ("testSyntaxError", testSyntaxError),
+            ("testBadSectionIdentifier", testBadSectionIdentifier),
+            ("testCompilerError", testCompilerError),
+        ]
+    }
+
     func testPipeline() throws {
         let partials = [
             "greeting": try Template("Hello, {{name}}")
