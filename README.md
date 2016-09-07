@@ -10,7 +10,7 @@ Still an intense work in progress.
 
 # Features
 
-MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/specs). The only exception is [recursive partials](https://github.com/Danappelxx/MuttonChop/blob/master/Tests/SpecTests/SpecTests.swift#L1253-L1266), which are not supported due to the fact that MuttonChop compiles all of its templates ahead of time, making infinite recursion impossible to resolve.
+MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/spec). The only exception is [recursive partials](https://github.com/Danappelxx/MuttonChop/blob/master/Tests/SpecTests/SpecTests.swift#L1253-L1266), which are not supported due to the fact that MuttonChop compiles all of its templates ahead of time, making infinite recursion impossible to resolve.
 
 More features (inheritance, etc.) are coming soon! Do keep your eyes open.
 
@@ -59,7 +59,7 @@ print(rendered) // -> Hello, Dan!
 
 ## Variables (Interpolation)
 
-Under construction... g
+Under construction...
 
 ## Sections
 
