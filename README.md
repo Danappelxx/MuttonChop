@@ -1,6 +1,6 @@
 # MuttonChop
 
-[![Swift][swift-badge]][platform-url] [![Platform][platform-badge]][platform-url] [![License][mit-badge]][mit-url] [![Travis][travis-badge]][travis-url] [![Codebeat][codebeat-badge]][codebeat-url]
+[![Swift][swift-badge]][platform-url] [![Platform][platform-badge]][platform-url] [![License][mit-badge]][mit-url] [![Travis][travis-badge]][travis-url] [![Codebeat][codebeat-badge]][codebeat-url] [![Codecov][codecov-badge]][codecov-url]
 
 > Mutton Chops are synonymous to Sideburns. Sideburns are kind of similar to Mustaches.
 
@@ -91,6 +91,8 @@ MIT - more information is in the LICENSE file.
 
 [codebeat-badge]: https://codebeat.co/badges/102d7671-84ec-4af2-b82c-b64844ad5e2b
 [codebeat-url]: https://codebeat.co/projects/github-com-danappelxx-muttonchop
+[codecov-badge]: https://codecov.io/gh/Danappelxx/MuttonChop/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/Danappelxx/MuttonChop
 [mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg?style=flat
 [mit-url]: https://tldrlegal.com/license/mit-license
 [platform-badge]: https://img.shields.io/badge/Platforms-OS%20X%20--%20Linux-lightgray.svg?style=flat

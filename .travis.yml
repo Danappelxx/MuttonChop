@@ -13,3 +13,7 @@ script:
   - swift build
   - swift build -c release
   - swift test
+after_success:
+    - swift package generate-xcodeproj
+    - WORKING_DIRECTORY=$(PWD) xcodebuild -toolchain org.swift.3020160831a -project MuttonChop.xcodeproj -scheme MuttonChop -sdk macosx10.12 -destination arch=x86_64 -configuration Debug -enableCodeCoverage YES test | xcpretty
+    - bash <(curl -s https://codecov.io/bash)
