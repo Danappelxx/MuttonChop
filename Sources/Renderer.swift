@@ -117,18 +117,7 @@ func render(ast: AST, contextStack: [Context]) -> String {
                 }
             }
 
-        case let .partial(partial, indentation):
-            let partial = partial.map { node -> ASTNode in
-                guard case let .text(text) = node else {
-                    return node
-                }
-
-                // add indentation to each newline
-                return .text(text.characters.split(separator: "\n", omittingEmptySubsequences: false).map(String.init(_:))
-                    .map { line in line.characters.isEmpty ? line : indentation + line }
-                    .joined(separator: "\n"))
-            }
-
+        case let .partial(partial):
             out += render(ast: partial, contextStack: contextStack)
         }
     }

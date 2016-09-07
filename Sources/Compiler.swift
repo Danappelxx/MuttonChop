@@ -3,7 +3,7 @@ public typealias AST = [ASTNode]
 public enum ASTNode: Equatable {
     case text(String)
     case variable(String, escaped: Bool)
-    case partial(ast: AST, indentation: String)
+    case partial(ast: AST)
     case section(variable: String, inverted: Bool, ast: AST)
 }
 
@@ -46,8 +46,14 @@ public func compile(tokens: [Token], index: inout Int, partials: [String:AST] = 
             guard let partial = partials[partial] else {
                 break
             }
+            let indented = partial.map { node -> ASTNode in
+                guard case let .text(text) = node else {
+                    return node
+                }
 
-            ast.append(.partial(ast: partial, indentation: indentation))
+                return .text(text.characters.split(separator: "\n", omittingEmptySubsequences: false).map(String.init(_:)).map { indentation + $0 }.joined(separator: "\n"))
+            }
+            ast.append(.partial(ast: indented))
 
         // nested section, recurse
         case .openSection, .openInvertedSection:

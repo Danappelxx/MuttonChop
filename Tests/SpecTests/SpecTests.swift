@@ -1341,9 +1341,9 @@ final class PartialsTests: XCTestCase {
     }
 
     func testStandaloneIndentation() throws {
-        let templateString = "\\n {{>partial}}\n/\n"
+        let templateString = "\\\n {{>partial}}\n/\n"
         let contextJSON = "{\"content\":\"<\n->\"}"
-        let expected = "\\n |\n <\n->\n |\n/\n"
+        let expected = "\\\n |\n <\n->\n |\n/\n"
         let partials = try [
             "partial": Template("|\n{{{content}}}\n|\n")
         ]
