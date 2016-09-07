@@ -8,6 +8,8 @@ osx_image: xcode8
 install:
   - eval "$(curl -sL https://raw.githubusercontent.com/Zewo/Zewo/5254525d9da56df29346fd76e99529c22034d61d/Scripts/install-swiftenv.sh)"
 script:
+  # Hack Package.swift to specify test dependencies
+  - touch /tmp/testing
   - swift build
   - swift build -c release
   - swift test
