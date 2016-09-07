@@ -227,6 +227,14 @@ public extension Reader {
 
         return popped
     }
+
+    func popToEnd() -> [Character] {
+        var popped = [Character]()
+        while let next = pop() {
+            popped.append(next)
+        }
+        return popped
+    }
 }
 
 public extension Reader {

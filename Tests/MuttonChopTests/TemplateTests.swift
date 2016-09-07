@@ -18,7 +18,7 @@ class TemplateTests: XCTestCase {
         let context = Context.dictionary(["name":.string("Dan")])
 
         let template = try Template(string, partials: partials)
-        let rendered = template.render(context: context)
+        let rendered = template.render(with: context)
         XCTAssertEqual(rendered, "And then I said \"Hello, Dan\"!")
     }
 

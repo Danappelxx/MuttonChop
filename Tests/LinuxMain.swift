@@ -8,6 +8,7 @@ XCTMain([
     testCase(CompilerTests.allTests),
 
     testCase(CommentsTests.allTests),
+    testCase(DelimiterTests.allTests),
     testCase(ReaderTests.allTests),
     testCase(InterpolationTests.allTests),
     testCase(InvertedTests.allTests),

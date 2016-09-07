@@ -16,7 +16,7 @@ class ParserTests: XCTestCase {
         // heavy whitespace to test robustness
         let string = "{{ #\nlocation }} {{  \n\t\r\n  location  \r\n\t\n  }} {{ \t/  location   }}"
         let reader = Reader(string)
-        let tokens = try parse(reader: reader)
+        let tokens = try Parser(reader: reader).parse()
         XCTAssertEqual(tokens.count, 5)
         XCTAssertEqual(tokens[0], .openSection(variable: "location"))
         XCTAssertEqual(tokens[1], .text(" "))

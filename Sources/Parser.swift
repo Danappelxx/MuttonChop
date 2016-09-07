@@ -49,15 +49,16 @@ final class Parser {
     private var tokens = [Token]()
     private let reader: Reader
 
+    var delimiters: (open: [Character], close: [Character]) = (["{", "{"], ["}", "}"])
     init(reader: Reader) {
         self.reader = reader
     }
 
-    public func parse() throws -> [Token] {
+    func parse() throws -> [Token] {
         do {
 
             while !reader.done {
-                if reader.peek(2) == ["{", "{"] {
+                if reader.peek(delimiters.open.count) == delimiters.open {
                     try tokens.append(parseExpression())
                     continue
                 }
@@ -73,7 +74,7 @@ final class Parser {
     }
 
     func parseText() throws -> Token {
-        let text = reader.pop(upTo: ["{", "{"], discarding: false)!
+        let text = reader.pop(upTo: delimiters.open, discarding: false)!
         return .text(String(text))
     }
 
@@ -83,20 +84,20 @@ final class Parser {
         let leading = reader.leadingWhitespace()
 
         // opening braces
-        precondition(reader.pop(2) == ["{", "{"])
+        precondition(reader.pop(delimiters.open.count) == delimiters.open)
 
         reader.consume(using: String.whitespaceAndNewLineCharacterSet)
 
         // char = token type
         guard
             let char = reader.pop(),
-            let content = reader.pop(upTo: ["}", "}"])
+            let content = reader.pop(upTo: delimiters.close)
             else {
                 throw Reason.missingEndOfToken
         }
 
         // closing braces
-        precondition(reader.pop(2) == ["}", "}"])
+        precondition(reader.pop(delimiters.close.count) == delimiters.close)
 
         // whitespace up to newline after the tag
         // nil = not only whitespace
@@ -162,13 +163,35 @@ final class Parser {
         case "&":
             return .unescapedVariable(String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
 
+        // change delimiter:
+        case "=":
+            defer { stripIfStandalone() }
+
+            // make a reader for the contents of the tag (code reuse FTW)
+            let reader = Reader(AnyIterator(content.makeIterator()))
+
+            // strip any whitespace before the delimiter
+            reader.consume(using: String.whitespaceCharacterSet)
+
+            // delimiter ends upon whitespace
+            guard let open = reader.pop(upTo: " ") else {
+                throw Reason.missingEndOfToken
+            }
+
+            // delimiter ends upon whitespace
+            // also strip any whitespace before/afterwards
+            guard let close = reader.pop(upTo: "=")?.filter({!String.whitespaceCharacterSet.contains($0)}) else {
+                throw Reason.missingEndOfToken
+            }
+
+            self.delimiters = (open: open, close: close)
+
+            // TODO: find a better way to return nothing
+            return .comment
+
         // normal variable
         default:
             return .variable(String([char] + content).trim(using: String.whitespaceAndNewLineCharacterSet))
         }
     }
-}
-
-public func parse(reader: Reader) throws -> [Token] {
-    return try Parser(reader: reader).parse()
 }

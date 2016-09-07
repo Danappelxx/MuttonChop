@@ -29,11 +29,11 @@ extension Array {
 }
 
 extension Dictionary {
-    func mapValues<T>(_ transform: (Value) -> T) -> [Key: T] {
+    func mapValues<T>(_ transform: (Value) throws -> T) rethrows -> [Key: T] {
         var dictionary: [Key: T] = [:]
 
         for (key, value) in self {
-            dictionary[key] = transform(value)
+            dictionary[key] = try transform(value)
         }
 
         return dictionary

@@ -90,7 +90,6 @@ func render(ast: AST, contextStack: [Context]) -> String {
                 switch escaped {
                 case true: out += escapeHTML(variable)
                 case false: out += variable
-
                 }
             }
 
