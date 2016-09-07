@@ -14,17 +14,12 @@ extension Context {
     init(from json: String) throws {
         try self.init(from: JSONParser().parse(data: json.data))
     }
-
     init(from json: JSON) {
         switch json {
         case let .array(array):
             self = .array(array.map(Context.init(from:)))
-        case let .object(dictionary):
-            self = .dictionary(dictionary.reduce([String:Context](), { dict, pair in
-                var dict = dict
-                dict[pair.key] = Context(from: pair.value)
-                return dict
-            }))
+        case let .object(object):
+            self = .dictionary(object.mapValues(Context.init(from:)))
         case let .number(number):
             switch number {
             case let .double(double) where floor(double) == double:
@@ -36,8 +31,8 @@ extension Context {
             case let .unsignedInteger(int):
                 self = .int(Int(int))
             }
-        case let .boolean(boolean):
-            self = .bool(boolean)
+        case let .boolean(bool):
+            self = .bool(bool)
         case let .string(string):
             self = .string(string)
         case .null:

@@ -12,7 +12,7 @@ import XCTest
 class CompilerTests: XCTestCase {
     func testWhitespace() throws {
         let template = "* one\n* two\n  {{#three}}\n* {{three}}\n{{/three}}a"
-        let context = Context.dictionary(["three": .string("three")])
+        let context: StructuredData = ["three": "three"]
         let tokens = try Parser(reader: Reader(template)).parse()
         let ast = try compile(tokens: tokens)
         let rendered = render(ast: ast, context: context)

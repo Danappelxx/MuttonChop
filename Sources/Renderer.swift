@@ -1,25 +1,9 @@
-public enum Context {
-    case bool(Bool)
-    case double(Double)
-    case int(Int)
-    case string(String)
-    case array([Context])
-    case dictionary([String: Context])
+@_exported import StructuredData
 
-    var isTruthy: Bool {
-        switch self {
-        case let .bool(bool):
-            return bool
-        case let .array(array):
-            return !array.isEmpty
-        case let .dictionary(dictionary):
-            return !dictionary.isEmpty
-        default:
-            return true
-        }
-    }
+public typealias Context = StructuredData
 
-    func asString() -> String? {
+extension Context {
+    var stringyValue: String? {
         switch self {
 
         case let .string(value): return value
@@ -29,7 +13,7 @@ public enum Context {
         case let .array(values):
             var out = ""
             for value in values {
-                guard let string = value.asString() else {
+                guard let string = value.stringyValue else {
                     return nil
                 }
                 out += string
@@ -37,6 +21,18 @@ public enum Context {
             return out
 
         default: return nil
+        }
+    }
+    var truthyValue: Bool {
+        switch self {
+        case let .bool(bool):
+            return bool
+        case let .array(array):
+            return !array.isEmpty
+        case let .dictionary(dictionary):
+            return !dictionary.isEmpty
+        default:
+            return true
         }
     }
 }
@@ -86,7 +82,7 @@ func render(ast: AST, contextStack: [Context]) -> String {
             out += text
 
         case let .variable(variable, escaped):
-            if let variable = contextStack.value(of: variable)?.asString() {
+            if let variable = contextStack.value(of: variable)?.stringyValue {
                 switch escaped {
                 case true: out += escapeHTML(variable)
                 case false: out += variable
@@ -95,7 +91,7 @@ func render(ast: AST, contextStack: [Context]) -> String {
 
         case let .section(variable, inverted, innerAST):
             let truthyContext: Context? = {
-                guard let context = contextStack.value(of: variable), context.isTruthy else {
+                guard let context = contextStack.value(of: variable), context.truthyValue else {
                     return nil
                 }
                 return context
