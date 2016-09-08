@@ -4,7 +4,7 @@
 
 > Mutton Chops are synonymous to Sideburns. Sideburns are kind of similar to Mustaches.
 
-Mustache templates in Swift. 99% spec compliant (by design). OSX and Linux supported.
+Mustache templates in Swift. 99% spec compliant (that 1% is by design). OSX and Linux supported.
 
 Still an intense work in progress.
 
