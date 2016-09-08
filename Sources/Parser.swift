@@ -8,14 +8,18 @@ public enum Token: Equatable {
     case unescapedVariable(String)
     // {{! comment }}
     case comment
+    // {{> partial }}
+    case partial(String, indentation: String)
     // {{# variable }}
     case openSection(variable: String)
     // {{^ variable }}
     case openInvertedSection(variable: String)
+    // {{$ identifier }}
+    case openOverrideSection(identifier: String)
+    // {{< identifier }}
+    case openParentSection(identifier: String)
     // {{/ variable }}
     case closeSection(variable: String)
-    // {{> partial }}
-    case partial(String, indentation: String)
 }
 
 public func ==(lhs: Token, rhs: Token) -> Bool {
@@ -123,6 +127,8 @@ final class Parser {
             }
         }
 
+        let trimmed = String(content).trim(using: String.whitespaceAndNewLineCharacterSet)
+
         switch char {
 
         // comment
@@ -133,23 +139,33 @@ final class Parser {
         // open section
         case "#":
             defer { stripIfStandalone() }
-            return .openSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+            return .openSection(variable: trimmed)
 
         // open inverted section
         case "^":
             defer { stripIfStandalone() }
-            return .openInvertedSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+            return .openInvertedSection(variable: trimmed)
+
+        // open inherit section
+        case "$":
+            defer { stripIfStandalone() }
+            return .openOverrideSection(identifier: trimmed)
+
+        // open overwrite section
+        case "<":
+            defer { stripIfStandalone() }
+            return .openParentSection(identifier: trimmed)
 
         // close section
         case "/":
             defer { stripIfStandalone() }
-            return .closeSection(variable: String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+            return .closeSection(variable: trimmed)
 
         // partial
         case ">":
             defer { stripIfStandalone() }
             let indentation = leading.map(String.init(_:)) ?? ""
-            return .partial(String(content).trim(using: String.whitespaceAndNewLineCharacterSet), indentation: indentation)
+            return .partial(trimmed, indentation: indentation)
 
         // unescaped variable
         case "{":
@@ -157,11 +173,11 @@ final class Parser {
             guard reader.pop() == "}" else {
                 throw Reason.missingEndOfToken
             }
-            return .unescapedVariable(String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+            return .unescapedVariable(trimmed)
 
         // unescaped variable
         case "&":
-            return .unescapedVariable(String(content).trim(using: String.whitespaceAndNewLineCharacterSet))
+            return .unescapedVariable(trimmed)
 
         // change delimiter:
         case "=":

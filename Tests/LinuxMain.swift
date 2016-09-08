@@ -14,4 +14,5 @@ XCTMain([
     testCase(InvertedTests.allTests),
     testCase(PartialsTests.allTests),
     testCase(SectionsTests.allTests),
+    testCase(InheritanceTests.allTests),
 ])

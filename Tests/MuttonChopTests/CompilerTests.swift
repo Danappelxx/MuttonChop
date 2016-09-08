@@ -41,7 +41,7 @@ class CompilerTests: XCTestCase {
 
         XCTAssertEqual(ast.count, 3)
         XCTAssertEqual(ast[0], .text("Hello, "))
-        XCTAssertEqual(ast[1], .section(variable: "location", inverted: false, ast: [
+        XCTAssertEqual(ast[1], .section(variable: "location", ast: [
             .text(" "),
             .variable("location", escaped: true),
             .text(" "),

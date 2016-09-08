@@ -88,30 +88,3 @@ extension String {
         return self[startIndex ..< index(endIndex, offsetBy: -end)]
     }
 }
-
-// for debugging purposes
-extension Sequence where Iterator.Element == ASTNode {
-    public func fancyDescription() -> String {
-        var desc = ""
-        for node in self {
-            switch node {
-            case let .partial(ast):
-                desc += "{{"
-                desc += ast.fancyDescription()
-                desc += "}}"
-
-            case let .section(variable, inverted, ast):
-                desc += "{{\(inverted ? "^" : "#") \(variable) }}"
-                desc += ast.fancyDescription()
-                desc += "{{/ \(variable) }}"
-
-            case let .text(text):
-                desc += text
-
-            case let .variable(variable, escaped: escaped):
-                desc += "{{\(escaped ? "" : "&") \(variable) }}"
-            }
-        }
-        return desc
-    }
-}

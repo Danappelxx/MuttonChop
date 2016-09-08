@@ -57,8 +57,10 @@ struct Test {
         name = try (json.get("name") as String)
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "-", with: "_")
+            .replacingOccurrences(of: ",", with: "_")
             .replacingOccurrences(of: "(", with: "_")
             .replacingOccurrences(of: ")", with: "")
+
 
         description = try (json.get("desc") as String)
             .replacingOccurrences(of: "\\\"", with: "\"")
@@ -98,7 +100,7 @@ struct Test {
 
 class GenerateTests: XCTestCase {
     let enabled = false
-    let suites = ["Sections", "Interpolation", "Inverted", "Comments", "Partials", "Delimiters"]
+    let suites = ["Sections", "Interpolation", "Inverted", "Comments", "Partials", "Delimiters", "Inheritance"]
 
     func testGenerate() throws {
         guard enabled else { return }
@@ -121,7 +123,7 @@ class GenerateTests: XCTestCase {
         let data = try Data(contentsOf: file)
 
         let json = try JSONParser().parse(data: C7.Data(Array(data)))
-        let overview = try json.get("overview") as String
+        let overview = try json["overview"]?.asString() ?? ""
         let testsJSON = try json.get("tests") as [JSON]
 
         let tests = try testsJSON.map(Test.init)
@@ -158,13 +160,13 @@ class GenerateTests: XCTestCase {
             (test.partials?.isEmpty ?? true
                 ? ""
                 : "        let partials = try [\n" + test.partials!.map { key, value in
-                    "            \"\(key)\": Template(\"\(value)\")"
+                  "            \"\(key)\": Template(\"\(value)\")"
                     }.joined(separator: ",\n") + "\n        ]\n"
             ),
             "        let context = try Context(from: contextJSON)",
             (test.partials?.isEmpty ?? true
                 ? "        let template = try Template(templateString)"
-                : "        let template = try Template(templateString, partials: partials)"
+                : "        let template = try Template(templateString, with: partials)"
             ),
             "        let rendered = template.render(with: context)",
             "",

@@ -89,32 +89,29 @@ func render(ast: AST, contextStack: [Context]) -> String {
                 }
             }
 
-        case let .section(variable, inverted, innerAST):
-            let truthyContext: Context? = {
-                guard let context = contextStack.value(of: variable), context.truthyValue else {
-                    return nil
-                }
-                return context
-            }()
+        case let .invertedSection(variable, innerAST):
+            if let context = contextStack.value(of: variable), context.truthyValue {
+                break
+            }
 
-            switch inverted {
-            case true:
-                if truthyContext == nil {
-                    out += render(ast: innerAST, contextStack: contextStack)
-                }
-            case false:
-                guard let context = truthyContext else {
-                    break
-                }
-                if case let .array(innerContexts) = context {
-                    out += innerContexts.map { render(ast: innerAST, contextStack: [$0] + contextStack) }.joined(separator: "")
-                } else {
-                    out += render(ast: innerAST, contextStack: [context] + contextStack)
-                }
+            out += render(ast: innerAST, contextStack: contextStack)
+
+        case let .section(variable, innerAST):
+            guard let context = contextStack.value(of: variable), context.truthyValue else {
+                continue
+            }
+
+            if case let .array(innerContexts) = context {
+                out += innerContexts.map { render(ast: innerAST, contextStack: [$0] + contextStack) }.joined(separator: "")
+            } else {
+                out += render(ast: innerAST, contextStack: [context] + contextStack)
             }
 
         case let .partial(partial):
             out += render(ast: partial, contextStack: contextStack)
+
+        case let .override(identifier: _, ast: innerAST):
+            out += render(ast: innerAST, contextStack: contextStack)
         }
     }
 
