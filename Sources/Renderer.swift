@@ -40,6 +40,7 @@ extension Context {
 }
 
 extension Sequence where Iterator.Element == Context {
+    // TODO: clean this up
     func value(of variable: String) -> Context? {
         let components = variable.characters.split(separator: ".").map({ String($0) })
 
@@ -58,6 +59,7 @@ extension Sequence where Iterator.Element == Context {
             return nil
 
         default:
+            // TODO: do this more efficiently (not create an array every lookup)
             var stack = Array(self)
             for component in components {
                 guard let value = stack.value(of: component) else {
@@ -70,6 +72,7 @@ extension Sequence where Iterator.Element == Context {
     }
 }
 
+// TODO: Move this into a `Renderer` class
 func render(ast: AST, context: Context) -> String {
     return render(ast: ast, contextStack: [context])
 }
