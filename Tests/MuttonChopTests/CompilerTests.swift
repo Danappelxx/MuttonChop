@@ -21,7 +21,7 @@ class CompilerTests: XCTestCase {
         let template = "* one\n* two\n  {{#three}}\n* {{three}}\n{{/three}}a"
         let context: StructuredData = ["three": "three"]
         let tokens = try Parser(reader: Reader(template)).parse()
-        let ast = try compile(tokens: tokens)
+        let ast = try Compiler(tokens: tokens).compile()
         let rendered = render(ast: ast, context: context)
         XCTAssertEqual(rendered, "* one\n* two\n* three\na")
     }
@@ -37,7 +37,7 @@ class CompilerTests: XCTestCase {
             .closeSection(variable: "location"),
             .text("!")
         ]
-        let ast = try compile(tokens: tokens)
+        let ast = try Compiler(tokens: tokens).compile()
 
         XCTAssertEqual(ast.count, 3)
         XCTAssertEqual(ast[0], .text("Hello, "))

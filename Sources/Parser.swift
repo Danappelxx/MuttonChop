@@ -1,4 +1,5 @@
-// stage 1 parsing
+// Stage 1 - Break down string into tokens
+
 public enum Token: Equatable {
     // some text
     case text(String)
@@ -24,19 +25,28 @@ public enum Token: Equatable {
 
 public func ==(lhs: Token, rhs: Token) -> Bool {
     switch (lhs, rhs) {
-    case let (.text(l), .text(r)): return l == r
-    case let (.variable(l), .variable(r)): return l == r
-    case let (.openSection(l), .openSection(r)): return l == r
-    case let (.closeSection(l), .closeSection(r)): return l == r
-    case let (.openInvertedSection(l), .openInvertedSection(r)): return l == r
+    case (.comment, .comment): return true
+    case let (.text(la),.text(ra)): return la == ra
+    case let (.variable(la),.variable(ra)): return la == ra
+    case let (.unescapedVariable(la),.unescapedVariable(ra)): return la == ra
+    case let (.partial(la, lb),.partial(ra, rb)): return la == ra && lb == rb
+    case let (.openSection(la),.openSection(ra)): return la == ra
+    case let (.openInvertedSection(la),.openInvertedSection(ra)): return la == ra
+    case let (.openOverrideSection(la),.openOverrideSection(ra)): return la == ra
+    case let (.openParentSection(la),.openParentSection(ra)): return la == ra
+    case let (.closeSection(la),.closeSection(ra)): return la == ra
     default: return false
     }
 }
 
 public struct SyntaxError: Error {
-    let line: Int
-    let column: Int
-    let reason: Reason
+    public enum Reason {
+        case missingEndOfToken
+    }
+
+    public let line: Int
+    public let column: Int
+    public let reason: Reason
 
     init(reader: Reader, reason: Reason) {
         self.line = reader.line
@@ -45,44 +55,34 @@ public struct SyntaxError: Error {
     }
 }
 
-public enum Reason: Error {
-    case missingEndOfToken
-}
+public final class Parser {
+    fileprivate var tokens = [Token]()
+    fileprivate let reader: Reader
 
-final class Parser {
-    private var tokens = [Token]()
-    private let reader: Reader
-
-    var delimiters: (open: [Character], close: [Character]) = (["{", "{"], ["}", "}"])
-    init(reader: Reader) {
+    public var delimiters: (open: [Character], close: [Character]) = (["{", "{"], ["}", "}"])
+    public init(reader: Reader) {
         self.reader = reader
     }
 
-    func parse() throws -> [Token] {
-        do {
-
-            while !reader.done {
-                if reader.peek(delimiters.open.count) == delimiters.open {
-                    try tokens.append(parseExpression())
-                    continue
-                }
-
-                try tokens.append(parseText())
+    public func parse() throws -> [Token] {
+        while !reader.done {
+            if reader.peek(delimiters.open.count) == delimiters.open {
+                try tokens.append(parseExpression())
+                continue
             }
 
-            return tokens
-
-        } catch let reason as Reason {
-            throw SyntaxError(reader: reader, reason: reason)
+            try tokens.append(parseText())
         }
+
+        return tokens
     }
 
-    func parseText() throws -> Token {
+    internal func parseText() throws -> Token {
         let text = reader.pop(upTo: delimiters.open, discarding: false)!
         return .text(String(text))
     }
 
-    func parseExpression() throws -> Token {
+    internal func parseExpression() throws -> Token {
         // whitespace up to newline before the tag
         // nil = not only whitespace
         let leading = reader.leadingWhitespace()
@@ -90,14 +90,16 @@ final class Parser {
         // opening braces
         precondition(reader.pop(delimiters.open.count) == delimiters.open)
 
-        reader.consume(using: String.whitespaceAndNewLineCharacterSet)
+        // skip whitespace inside tag
+        reader.pop(matching: String.whitespaceAndNewLineCharacterSet)
 
-        // char = token type
+        // char = token type (first non-whitespace character after opening braces)
+        // content = everything after the token
         guard
             let char = reader.pop(),
             let content = reader.pop(upTo: delimiters.close)
             else {
-                throw Reason.missingEndOfToken
+                throw SyntaxError(reader: reader, reason: .missingEndOfToken)
         }
 
         // closing braces
@@ -107,29 +109,25 @@ final class Parser {
         // nil = not only whitespace
         let trailing = reader.trailingWhitespace()
 
-        func stripIfStandalone() {
-            // if just whitespace until newline on both sides, tag is standalone
-            guard let _ = leading, let trailing = trailing else {
-                return
-            }
+        // trimmed = content with whitespace trimmed off
+        // made a computed property so that it is lazy
+        var trimmed: String { return String(content).trim(using: String.whitespaceAndNewLineCharacterSet) }
 
-            // get rid of trailing whitespace
-            reader.pop(trailing.count)
-            // get rid of newline
-            reader.consume(using: String.newLineCharacterSet, upTo: 1)
+        // if the tag is standalone, remove all leading and trailing whitespace
+        let stripIfStandalone = { self.stripIfStandalone(leading: leading, trailing: trailing) }
 
-            // get the token before it (should be text)
-            if case let .text(prev)? = tokens.last {
-                // get rid of trailing whitespace on that token
-                let newText = prev.trimRight(using: String.whitespaceCharacterSet)
-                // put it back in
-                tokens[tokens.endIndex - 1] = .text(newText)
-            }
-        }
-
-        let trimmed = String(content).trim(using: String.whitespaceAndNewLineCharacterSet)
-
+        // char = token type (first non-whitespace character after opening braces)
         switch char {
+
+        // change delimiter:
+        case "=":
+            defer { stripIfStandalone() }
+
+            self.delimiters = try parseDelimiters(tagContents: content)
+
+            // maybe it would be better to return optional?
+            // either way, this works for now
+            return .comment
 
         // comment
         case "!":
@@ -171,7 +169,7 @@ final class Parser {
         case "{":
             // pop the third brace
             guard reader.pop() == "}" else {
-                throw Reason.missingEndOfToken
+                throw SyntaxError(reader: reader, reason: .missingEndOfToken)
             }
             return .unescapedVariable(trimmed)
 
@@ -179,35 +177,53 @@ final class Parser {
         case "&":
             return .unescapedVariable(trimmed)
 
-        // change delimiter:
-        case "=":
-            defer { stripIfStandalone() }
-
-            // make a reader for the contents of the tag (code reuse FTW)
-            let reader = Reader(AnyIterator(content.makeIterator()))
-
-            // strip any whitespace before the delimiter
-            reader.consume(using: String.whitespaceCharacterSet)
-
-            // delimiter ends upon whitespace
-            guard let open = reader.pop(upTo: " ") else {
-                throw Reason.missingEndOfToken
-            }
-
-            // delimiter ends upon whitespace
-            // also strip any whitespace before/afterwards
-            guard let close = reader.pop(upTo: "=")?.filter({!String.whitespaceCharacterSet.contains($0)}) else {
-                throw Reason.missingEndOfToken
-            }
-
-            self.delimiters = (open: open, close: close)
-
-            // TODO: find a better way to return nothing
-            return .comment
-
-        // normal variable
+        // escaped variable
         default:
             return .variable(String([char] + content).trim(using: String.whitespaceAndNewLineCharacterSet))
+
         }
+    }
+}
+
+fileprivate extension Parser {
+    // a standalone tag is one which has only whitespace on both sides until a newlien
+    func stripIfStandalone(leading: [Character]?, trailing: [Character]?) {
+        // if just whitespace until newline on both sides, tag is standalone
+        guard let _ = leading, let trailing = trailing else {
+            return
+        }
+
+        // get rid of trailing whitespace
+        reader.pop(trailing.count)
+        // get rid of newline
+        reader.pop(matching: String.newLineCharacterSet, upTo: 1)
+
+        // get the token before it (should be text)
+        if case let .text(prev)? = tokens.last {
+            // get rid of trailing whitespace on that token
+            let newText = prev.trimRight(using: String.whitespaceCharacterSet)
+            // put it back in
+            tokens[tokens.endIndex - 1] = .text(newText)
+        }
+    }
+
+    func parseDelimiters(tagContents: [Character]) throws -> (open: [Character], close: [Character]) {
+        // make a reader for the contents of the tag (code reuse FTW)
+        let reader = Reader(AnyIterator(tagContents.makeIterator()))
+
+        // strip any whitespace before the open delimiter
+        reader.pop(matching: String.whitespaceCharacterSet)
+
+        guard
+            // open delimiter ends upon whitespace
+            let open = reader.pop(upTo: " "),
+            // close delimiter ends upon =
+            // also strip any whitespace before/afterwards
+            let close = reader.pop(upTo: "=")?.filter({!String.whitespaceCharacterSet.contains($0)})
+            else {
+            throw SyntaxError(reader: reader, reason: .missingEndOfToken)
+        }
+
+        return (open: open, close: close)
     }
 }

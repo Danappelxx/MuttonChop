@@ -1,7 +1,10 @@
 // MARK: Declarations
 public final class Reader {
+    // characters that we haven't looked at yet
     fileprivate let iterator: AnyIterator<Character>
+    // everything we have peeked
     fileprivate var lookahead = [Character]()
+    // everything we have popped
     fileprivate var lookbehind = [Character]()
 
     public init(_ iterator: AnyIterator<Character>) {
@@ -10,22 +13,6 @@ public final class Reader {
 
     public convenience init(_ string: String) {
         self.init(AnyIterator(string.characters.makeIterator()))
-    }
-
-    public func backPeek(_ n: Int) -> [Character] {
-        return lookbehind.last(n)
-    }
-
-    // returns false if it ran out of characters
-    @discardableResult
-    fileprivate func loadLookahead(_ n: Int = 1) -> Bool {
-        for _ in 0..<n {
-            guard let next = iterator.next() else {
-                return false
-            }
-            lookahead.append(next)
-        }
-        return true
     }
 
     public func peek(_ n: Int) -> [Character] {
@@ -48,6 +35,21 @@ public final class Reader {
             }
             lookbehind.append(char)
         }
+        return lookbehind.last(n)
+    }
+
+    // returns false if it ran out of characters
+    @discardableResult
+    fileprivate func loadLookahead(_ n: Int = 1) -> Bool {
+        for _ in 0..<n {
+            guard let next = iterator.next() else {
+                return false
+            }
+            lookahead.append(next)
+        }
+        return true
+    }
+    public func backPeek(_ n: Int) -> [Character] {
         return lookbehind.last(n)
     }
 }
@@ -227,22 +229,14 @@ public extension Reader {
 
         return popped
     }
-
-    func popToEnd() -> [Character] {
-        var popped = [Character]()
-        while let next = pop() {
-            popped.append(next)
-        }
-        return popped
-    }
 }
 
 public extension Reader {
-    func consume(using characterSet: [Character]) {
-        consume(using: characterSet, upTo: -1)
+    func pop(matching characterSet: [Character]) {
+        pop(matching: characterSet, upTo: -1)
     }
 
-    func consume(using characterSet: [Character], upTo: Int) {
+    func pop(matching characterSet: [Character], upTo: Int) {
         var upTo = upTo
         while upTo != 0, let c = peek(), characterSet.contains(c) {
             upTo -= 1

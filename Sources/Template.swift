@@ -5,7 +5,7 @@ public struct Template {
         self.ast = ast
     }
     public init(_ tokens: [Token], with templates: [String:Template] = [:]) throws {
-        try self.init(compile(tokens: tokens, with: templates.mapValues { $0.ast }))
+        try self.init(Compiler(tokens: tokens, templates: templates.mapValues { $0.ast }).compile())
     }
     public init(_ reader: Reader, with templates: [String:Template] = [:]) throws {
         try self.init(Parser(reader: reader).parse(), with: templates)

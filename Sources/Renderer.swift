@@ -1,3 +1,5 @@
+// Stage 3 - Render AST to string
+
 @_exported import StructuredData
 
 public typealias Context = StructuredData
@@ -82,16 +84,18 @@ func render(ast: AST, contextStack: [Context]) -> String {
             out += text
 
         case let .variable(variable, escaped):
-            if let variable = contextStack.value(of: variable)?.stringyValue {
-                switch escaped {
-                case true: out += escapeHTML(variable)
-                case false: out += variable
-                }
+            guard let variable = contextStack.value(of: variable)?.stringyValue else {
+                continue
             }
+            switch escaped {
+            case true: out += escapeHTML(variable)
+            case false: out += variable
+            }
+
 
         case let .invertedSection(variable, innerAST):
             if let context = contextStack.value(of: variable), context.truthyValue {
-                break
+                continue
             }
 
             out += render(ast: innerAST, contextStack: contextStack)

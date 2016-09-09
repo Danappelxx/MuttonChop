@@ -40,19 +40,6 @@ extension Dictionary {
     }
 }
 
-extension AnyIterator where Element: Equatable {
-    func pop(until element: Element) -> (matched: Bool, popped: [Element]) {
-        var popped = [Element]()
-        while let next = next() {
-            guard next != element else {
-                return (matched: true, popped: popped)
-            }
-            popped.append(next)
-        }
-        return (matched: false, popped: popped)
-    }
-}
-
 extension String {
     static let newLineCharacterSet: [Character] = ["\n", "\r", "\r\n"]
     static let whitespaceCharacterSet: [Character] = [" ", "\t"]
