@@ -16,9 +16,9 @@ public enum Token: Equatable {
     // {{^ variable }}
     case openInvertedSection(variable: String)
     // {{$ identifier }}
-    case openOverrideSection(identifier: String)
+    case openBlockSection(identifier: String)
     // {{< identifier }}
-    case openParentSection(identifier: String)
+    case openOverrideSection(identifier: String)
     // {{/ variable }}
     case closeSection(variable: String)
 }
@@ -32,8 +32,8 @@ public func ==(lhs: Token, rhs: Token) -> Bool {
     case let (.partial(la, lb),.partial(ra, rb)): return la == ra && lb == rb
     case let (.openSection(la),.openSection(ra)): return la == ra
     case let (.openInvertedSection(la),.openInvertedSection(ra)): return la == ra
+    case let (.openBlockSection(la),.openBlockSection(ra)): return la == ra
     case let (.openOverrideSection(la),.openOverrideSection(ra)): return la == ra
-    case let (.openParentSection(la),.openParentSection(ra)): return la == ra
     case let (.closeSection(la),.closeSection(ra)): return la == ra
     default: return false
     }
@@ -144,15 +144,15 @@ public final class Parser {
             defer { stripIfStandalone() }
             return .openInvertedSection(variable: trimmed)
 
-        // open inherit section
+        // open override section
         case "$":
             defer { stripIfStandalone() }
-            return .openOverrideSection(identifier: trimmed)
+            return .openBlockSection(identifier: trimmed)
 
-        // open overwrite section
+        // open parent section
         case "<":
             defer { stripIfStandalone() }
-            return .openParentSection(identifier: trimmed)
+            return .openOverrideSection(identifier: trimmed)
 
         // close section
         case "/":

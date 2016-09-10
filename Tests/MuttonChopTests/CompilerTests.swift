@@ -22,7 +22,7 @@ class CompilerTests: XCTestCase {
         let context: StructuredData = ["three": "three"]
         let tokens = try Parser(reader: Reader(template)).parse()
         let ast = try Compiler(tokens: tokens).compile()
-        let rendered = render(ast: ast, context: context)
+        let rendered = Renderer(ast: ast).render(with: context)
         XCTAssertEqual(rendered, "* one\n* two\n* three\na")
     }
 

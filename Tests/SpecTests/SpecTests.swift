@@ -1321,7 +1321,7 @@ final class PartialsTests: XCTestCase {
             ("testBasicBehavior", testBasicBehavior),
             ("testFailedLookup", testFailedLookup),
             ("testContext", testContext),
-//            ("testRecursion", testRecursion),
+            ("testRecursion", testRecursion),
             ("testSurroundingWhitespace", testSurroundingWhitespace),
             ("testInlineIndentation", testInlineIndentation),
             ("testStandaloneLineEndings", testStandaloneLineEndings),
@@ -1341,8 +1341,8 @@ final class PartialsTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "The greater-than operator should expand to the named partial.")
     }
@@ -1368,26 +1368,26 @@ final class PartialsTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "The greater-than operator should operate within the current context.")
     }
 
-//    func testRecursion() throws {
-//        let templateString = "{{>node}}"
-//        let contextJSON = "{\"content\":\"X\",\"nodes\":[{\"content\":\"Y\",\"nodes\":[]}]}"
-//        let expected = "X<Y<>>"
-//        let partials = try [
-//            "node": Template("{{content}}<{{#nodes}}{{>node}}{{/nodes}}>")
-//        ]
-//
-//        let context = try Context(from: contextJSON)
-//        let template = try Template(templateString, with: partials)
-//        let rendered = template.render(with: context)
-//
-//        XCTAssertEqual(rendered, expected, "The greater-than operator should properly recurse.")
-//    }
+    func testRecursion() throws {
+        let templateString = "{{>node}}"
+        let contextJSON = "{\"content\":\"X\",\"nodes\":[{\"content\":\"Y\",\"nodes\":[]}]}"
+        let expected = "X<Y<>>"
+        let partials = try [
+            "node": Template("{{content}}<{{#nodes}}{{>node}}{{/nodes}}>")
+        ]
+
+        let context = try Context(from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
+
+        XCTAssertEqual(rendered, expected, "The greater-than operator should properly recurse.")
+    }
 
     func testSurroundingWhitespace() throws {
         let templateString = "| {{>partial}} |"
@@ -1398,8 +1398,8 @@ final class PartialsTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "The greater-than operator should not alter surrounding whitespace.")
     }
@@ -1413,8 +1413,8 @@ final class PartialsTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Whitespace should be left untouched.")
     }
@@ -1428,8 +1428,8 @@ final class PartialsTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "\"\r\n\" should be considered a newline for standalone tags.")
     }
@@ -1443,8 +1443,8 @@ final class PartialsTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Standalone tags should not require a newline to precede them.")
     }
@@ -1458,8 +1458,8 @@ final class PartialsTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Standalone tags should not require a newline to follow them.")
     }
@@ -1473,8 +1473,8 @@ final class PartialsTests: XCTestCase {
 //        ]
 //
 //        let context = try Context(from: contextJSON)
-//        let template = try Template(templateString, with: partials)
-//        let rendered = template.render(with: context)
+//        let template = try Template(templateString)
+//        let rendered = template.render(with: context, partials: partials)
 //
 //        XCTAssertEqual(rendered, expected, "Each line of the partial should be indented before rendering.")
 //    }
@@ -1488,8 +1488,8 @@ final class PartialsTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Superfluous in-tag whitespace should be ignored.")
     }
@@ -1584,8 +1584,8 @@ final class DelimitersTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Delimiters set in a parent template should not affect a partial.")
     }
@@ -1599,8 +1599,8 @@ final class DelimitersTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Delimiters set in a partial should not affect the parent template.")
     }
@@ -1735,7 +1735,7 @@ final class InheritanceTests: XCTestCase {
             ("testOverridepartialwithnewlines", testOverridepartialwithnewlines),
             ("testInheritindentation", testInheritindentation),
             ("testSupertemplate", testSupertemplate),
-//            ("testRecursion", testRecursion),
+            ("testRecursion", testRecursion),
             ("testMulti_levelinheritance", testMulti_levelinheritance),
             ("testMulti_levelinheritance_nosubchild", testMulti_levelinheritance_nosubchild),
             ("testTextinsidesuper1", testTextinsidesuper1),
@@ -1824,8 +1824,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Default content rendered inside included templates")
     }
@@ -1839,8 +1839,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Overridden content")
     }
@@ -1854,8 +1854,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Provided data does not override data passed into parent")
     }
@@ -1869,8 +1869,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Provided data does not override default value of block")
     }
@@ -1884,8 +1884,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Overridden partial")
     }
@@ -1899,8 +1899,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Two overridden partials with different content")
     }
@@ -1914,8 +1914,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Override partial with newlines")
     }
@@ -1929,8 +1929,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Override one substitution but not the other")
     }
@@ -1944,40 +1944,41 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Super templates behave identically to partials when called with no parameters")
     }
 
-//    func testRecursion() throws {
-//        let templateString = "{{<include}}{{$foo}}override{{/foo}}{{/include}}"
-//        let contextJSON = "{}"
-//        let expected = "override override override don't recurse"
-//        let partials = try [
-//            "include": Template("{{$foo}}default content{{/foo}} {{$bar}}{{<include2}}{{/include2}}{{/bar}}"),
-//            "include2": Template("{{$foo}}include2 default content{{/foo}} {{<include}}{{$bar}}don't recurse{{/bar}}{{/include}}")
-//        ]
-//
-//        let context = try Context(from: contextJSON)
-//        let template = try Template(templateString, with: partials)
-//        let rendered = template.render(with: context)
-//
-//        XCTAssertEqual(rendered, expected, "Recursion in inherited templates")
-//    }
+    func testRecursion() throws {
+        let templateString = "{{<include}}{{$foo}}override{{/foo}}{{/include}}"
+        let contextJSON = "{}"
+        let expected = "override override override don't recurse"
+        let partials = try [
+            "include": Template("{{$foo}}default content{{/foo}} {{$bar}}{{<include2}}{{/include2}}{{/bar}}"),
+            "include2": Template("{{$foo}}include2 default content{{/foo}} {{<include}}{{$bar}}don't recurse{{/bar}}{{/include}}")
+        ]
+
+        let context = try Context(from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
+
+        XCTAssertEqual(rendered, expected, "Recursion in inherited templates")
+    }
 
     func testMulti_levelinheritance() throws {
         let templateString = "{{<parent}}{{$a}}c{{/a}}{{/parent}}"
         let contextJSON = "{}"
         let expected = "c"
-
-        let grandParent = try Template("{{$a}}g{{/a}}")
-        let older = try Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}", with: ["grandParent": grandParent])
-        let parent = try Template("{{<older}}{{$a}}p{{/a}}{{/older}}", with: ["older": older])
+        let partials = try [
+            "older": Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}"),
+            "parent": Template("{{<older}}{{$a}}p{{/a}}{{/older}}"),
+            "grandParent": Template("{{$a}}g{{/a}}")
+        ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: ["parent": parent])
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Top-level substitutions take precedence in multi-level inheritance")
     }
@@ -1986,14 +1987,15 @@ final class InheritanceTests: XCTestCase {
         let templateString = "{{<parent}}{{/parent}}"
         let contextJSON = "{}"
         let expected = "p"
-
-        let grandParent = try Template("{{$a}}g{{/a}}")
-        let older = try Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}", with: ["grandParent": grandParent])
-        let parent = try Template("{{<older}}{{$a}}p{{/a}}{{/older}}", with: ["older": older])
+        let partials = try [
+            "older": Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}"),
+            "parent": Template("{{<older}}{{$a}}p{{/a}}{{/older}}"),
+            "grandParent": Template("{{$a}}g{{/a}}")
+        ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: ["parent": parent])
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Top-level substitutions take precedence in multi-level inheritance")
     }
@@ -2007,8 +2009,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Ignores text inside super templates, but does parse dollarsign tags")
     }
@@ -2022,8 +2024,8 @@ final class InheritanceTests: XCTestCase {
         ]
 
         let context = try Context(from: contextJSON)
-        let template = try Template(templateString, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
 
         XCTAssertEqual(rendered, expected, "Allows text inside a super tag, but ignores it")
     }

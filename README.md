@@ -4,15 +4,15 @@
 
 > Mutton Chops are synonymous to Sideburns. Sideburns are kind of similar to Mustaches.
 
-Mustache templates in Swift. 99% spec compliant (that 1% is by design). OSX and Linux supported.
-
-Still an intense work in progress.
+Mustache templates in Swift. 100% spec compliant. OSX and Linux supported.
 
 # Features
 
-MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/spec). The only exception is [recursive partials](https://github.com/Danappelxx/MuttonChop/blob/b9a1e99ed27ee81cd2dfd24173dc6857c875bbcc/Tests/SpecTests/SpecTests.swift#L1253-L1266), which are not supported due to the fact that MuttonChop compiles all of its templates ahead of time, making infinite recursion impossible to resolve.
+MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/spec).
 
-MuttonChop also supports template inheritance, conforming to the [semi-official specification](https://github.com/mustache/spec/pull/75), though it does not support recursive inheritance for the same reasons as recursive partials.
+MuttonChop compiles its templates, meaning that it only parses them once. This means it is very fast.
+
+MuttonChop supports template inheritance, conforming to the [semi-official specification](https://github.com/mustache/spec/pull/75). Big thanks to [@groue](https://github.com/groue) for providing the inheritance algorithm.
 
 More features are coming soon! Do keep your eyes open.
 
@@ -72,6 +72,10 @@ Under construction...
 Under construction...
 
 ## Partials
+
+Under construction...
+
+## Inheritance
 
 Under construction...
 

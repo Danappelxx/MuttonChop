@@ -26,8 +26,8 @@ class TemplateTests: XCTestCase {
         let string = "And then I said \"{{>greeting}}\"!"
         let context: StructuredData = ["name": "Dan"]
 
-        let template = try Template(string, with: partials)
-        let rendered = template.render(with: context)
+        let template = try Template(string)
+        let rendered = template.render(with: context, partials: partials)
         XCTAssertEqual(rendered, "And then I said \"Hello, Dan\"!")
     }
 

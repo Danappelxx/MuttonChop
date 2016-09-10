@@ -99,7 +99,7 @@ struct Test {
 }
 
 class GenerateTests: XCTestCase {
-    let enabled = false
+    let enabled = true
     let suites = ["Sections", "Interpolation", "Inverted", "Comments", "Partials", "Delimiters", "Inheritance"]
 
     func testGenerate() throws {
@@ -164,11 +164,10 @@ class GenerateTests: XCTestCase {
                     }.joined(separator: ",\n") + "\n        ]\n"
             ),
             "        let context = try Context(from: contextJSON)",
+            "        let template = try Template(templateString)",
             (test.partials?.isEmpty ?? true
-                ? "        let template = try Template(templateString)"
-                : "        let template = try Template(templateString, with: partials)"
-            ),
-            "        let rendered = template.render(with: context)",
+                ? "        let rendered = template.render(with: context)"
+                : "        let rendered = template.render(with: context, partials: partials)"),
             "",
             "        XCTAssertEqual(rendered, expected, \"\(test.description)\")",
             "    }",
