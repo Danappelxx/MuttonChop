@@ -10,7 +10,7 @@ Mustache templates in Swift. 100% spec compliant. OSX and Linux supported.
 
 MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/spec).
 
-MuttonChop compiles its templates, meaning that it only parses them once. This means it is very fast.
+MuttonChop compiles its templates, meaning that it only parses them once. This makes it is very fast.
 
 MuttonChop supports template inheritance, conforming to the [semi-official specification](https://github.com/mustache/spec/pull/75). Big thanks to [@groue](https://github.com/groue) for providing the inheritance algorithm.
 
@@ -59,13 +59,58 @@ print(rendered) // -> Hello, Dan!
 
 ## Tags
 
+Tags are denoted by two opening braces `{{`, followed by some content, delimited by two closing braces `}}`. The first non-whitespace character inside the tag denotes the type of the tag.
+
+The format for this section is: template, context, result. The syntax for doing all three is shown in the section above.
+
 ## Variables (Interpolation)
 
-Under construction...
+Interpolation tags do not have a type-denoting character. The tag is replaced with the result of its content looked up in the context stack. If the context stack does not contain its value, the tag is simply ignored. 
+
+The variable dot `{{.}}` is special, displaying the current topmost value of the context stack.
+
+```mustache
+{{ greeting }}, {{ location }}!
+```
+
+```
+let context: Context = [
+    "greeting": "Hello",
+    "location": "world"
+]
+```
+
+```
+Hello, world!
+```
 
 ## Sections
 
-Under construction...
+Section tags start with an opening tag (`{{# section }}`) and end with a closing tag (``{{/ section }}``). Everything between the open and closing tags is the content. 
+
+The content is only rendered if the value inside the opening/closing tags is truthy. If the value is an array, the array is iterated and the content of the section is rendered for every value. If the value is a dictionary, it is added to the context stack.
+
+```mustache
+{{# person}}
+  {{name}} is {{age}} years old.
+  Some numbers he knows are{{# numbers}} {{.}}{{/numbers}}.
+{{/ person}}
+```
+
+```swift
+let context: Context = [
+    "person": [
+        "name": "Dan",
+        "age": 16
+        "numbers": [1, 2, 3, 4, 5],
+    ]
+]
+```
+
+```
+Dan is 16 years old.
+Some numbers he knows are 1 2 3 4 5.
+```
 
 ## Inverted Sections
 
