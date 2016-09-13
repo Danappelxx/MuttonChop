@@ -99,7 +99,7 @@ struct Test {
 }
 
 class GenerateTests: XCTestCase {
-    let enabled = true
+    let enabled = false
     let suites = ["Sections", "Interpolation", "Inverted", "Comments", "Partials", "Delimiters", "Inheritance"]
 
     func testGenerate() throws {
