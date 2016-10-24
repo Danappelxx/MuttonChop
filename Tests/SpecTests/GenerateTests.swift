@@ -7,44 +7,48 @@
 //
 
 import XCTest
-import JSON
+import Axis
 @testable import MuttonChop
 #if os(Linux)
     import Glibc
 #endif
 
-extension Context {
-    init(from json: String) throws {
-        try self.init(from: JSONParser().parse(data: json.data))
-    }
-    init(from json: JSON) {
-        switch json {
-        case let .array(array):
-            self = .array(array.map(Context.init(from:)))
-        case let .object(object):
-            self = .dictionary(object.mapValues(Context.init(from:)))
-        case let .number(number):
-            switch number {
-            case let .double(double) where floor(double) == double:
-                self = .int(Int(double))
-            case let .double(double):
-                self = .double(double)
-            case let .integer(int):
-                self = .int(int)
-            case let .unsignedInteger(int):
-                self = .int(Int(int))
-            }
-        case let .boolean(bool):
-            self = .bool(bool)
-        case let .string(string):
-            self = .string(string)
-        case .null:
-            fatalError("null is not supported")
-        }
-    }
-}
-
 #if os(OSX)
+    
+    
+    extension Context {
+        public init(from: String) throws {
+            let buffer = Buffer(from)
+            let map: Map = try JSONMapParser.parse(buffer.bytes)
+            self.init(from: map)
+        }
+        init(from map: Map) {
+            switch map {
+            case let .array(array):
+                self = .array(array.map(Context.init(from:)))
+            case let .dictionary(dic):
+                self = .dictionary(dic)
+            case let .double(double) where floor(double) == double:
+                    self = .int(Int(double))
+            case let .double(double):
+                 self = .double(double)
+            case let .int(int):
+                 self = .int(int)
+            case let .bool(bool):
+                self = .bool(bool)
+            case let .string(string):
+                self = .string(string)
+            case .null:
+                fatalError("null is not supported")
+            case let .buffer(_):
+                fatalError("not supported")
+            }
+        }
+}
+    
+    
+    
+    
 struct Test {
     let name: String
     let description: String
@@ -53,7 +57,7 @@ struct Test {
     let template: String
     let expected: String
 
-    init(json: JSON) throws {
+    init(json: Map) throws {
         name = try (json.get("name") as String)
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "-", with: "_")
@@ -66,7 +70,7 @@ struct Test {
             .replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
 
-        partials = try json["partials"]?.asDictionary()
+        partials = try json["partials"].asDictionary()
             .mapValues { try $0.asString() }
             .mapValues { $0
                 .replacingOccurrences(of: "\\\"", with: "\"")
@@ -74,8 +78,9 @@ struct Test {
                 .replacingOccurrences(of: "\t", with: "\\t")
                 .replacingOccurrences(of: "\r", with: "\\r")
                 .replacingOccurrences(of: "\n", with: "\\n") }
-
-        contextJSON = try JSONSerializer().serializeToString(json: .object(json.get("data")))
+        let buffer = try JSONMapSerializer.serialize((json.dictionary?["data"]!)!)
+        guard let string = String(data: Data(buffer) , encoding: .utf8) else { fatalError() }
+        contextJSON = string
             .replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\t", with: "\\t")
@@ -121,10 +126,11 @@ class GenerateTests: XCTestCase {
                 fatalError()
         }
         let data = try Data(contentsOf: file)
-
-        let json = try JSONParser().parse(data: C7.Data(Array(data)))
-        let overview = try json["overview"]?.asString() ?? ""
-        let testsJSON = try json.get("tests") as [JSON]
+        guard let string = String(data: data, encoding: .utf8) else { fatalError() }
+        let buffer = Buffer(string)
+        let json = try JSONMapParser.parse(buffer.bytes)
+        let overview = json["overview"].string ?? ""
+        let testsJSON = try json.get("tests") as [Map]
 
         let tests = try testsJSON.map(Test.init)
         let testCases = tests.map(generateTestCase)
