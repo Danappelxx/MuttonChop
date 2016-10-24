@@ -19,7 +19,7 @@ class CompilerTests: XCTestCase {
 
     func testWhitespace() throws {
         let template = "* one\n* two\n  {{#three}}\n* {{three}}\n{{/three}}a"
-        let context: StructuredData = ["three": "three"]
+        let context: Map = ["three": "three"]
         let tokens = try Parser(reader: Reader(template)).parse()
         let ast = try Compiler(tokens: tokens).compile()
         let rendered = Renderer(ast: ast).render(with: context)
