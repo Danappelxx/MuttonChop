@@ -8,13 +8,10 @@ Mustache templates in Swift. 100% spec compliant. OSX and Linux supported.
 
 # Features
 
-MuttonChop conforms entirely to the official [Mustache specification](https://github.com/mustache/spec).
-
-MuttonChop compiles its templates, meaning that it only parses them once. This makes it is very fast.
-
-MuttonChop supports template inheritance, conforming to the [semi-official specification](https://github.com/mustache/spec/pull/75). Big thanks to [@groue](https://github.com/groue) for providing the inheritance algorithm.
-
-More features are coming soon! Do keep your eyes open.
+- [x] Conforms entirely to the official [Mustache specification](https://github.com/mustache/spec).
+- [x] Compiles its templates, meaning that it only parses them once. This makes it very fast.
+- [x] Supports template inheritance, conforming to the [semi-official specification](https://github.com/mustache/spec/pull/75). Big thanks to [@groue](https://github.com/groue) for providing the inheritance algorithm.
+- [ ] More coming soon! Do keep your eyes open.
 
 # Installation
 
@@ -23,12 +20,12 @@ import PackageDescription
 
 let package = Package(
     dependencies: [
-        .Package(url: "https://github.com/Danappelxx/MuttonChop.git", majorVersion: 0, minor: 1),
+        .Package(url: "https://github.com/Danappelxx/MuttonChop.git", majorVersion: 0, minor: 2),
     ]
 )
 ```
 
-MuttonChop should work with any version of Swift ranging from `08-04` to the Xcode 8 GM Seed.
+MuttonChop works best with Swift 3.0. Compatibility with previous/future snapshots/releases is not guaranteed.
 
 # Usage
 
@@ -48,7 +45,7 @@ let context: Context = [
 ]
 ```
 
-Notice how the type of context is `Context`. `Context` is a typealias (for clarity) to `StructuredData`, which is an intermediate type from [Open-Swift](https://github.com/open-swift/C7/blob/master/Sources/StructuredData.swift) that can be converted to and from other data types such as JSON, XML, YAML, and so on.
+Notice how the type of context is `Context`. `Context` is a typealias (for clarity) to `Map`, which is an intermediate type from [Zewo](https://github.com/Zewo/Zewo) that can be converted to and from other data types such as JSON, XML, YAML, and so on. It is used in MuttonChop to provide easy compatibility with Zewo modules, but can be trivially converted to and from other representations.
 
 We can then render the template with the context like such:
 

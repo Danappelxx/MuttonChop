@@ -6,14 +6,12 @@ sudo: required
 dist: trusty
 osx_image: xcode8
 install:
-  - eval "$(curl -sL https://raw.githubusercontent.com/Zewo/Zewo/5254525d9da56df29346fd76e99529c22034d61d/Scripts/install-swiftenv.sh)"
+  - eval "$(curl -sL https://raw.githubusercontent.com/Zewo/Zewo/master/Scripts/Travis/install.sh)"
 script:
-  # Hack Package.swift to specify test dependencies
-  - touch /tmp/testing
   - swift build
   - swift build -c release
   - swift test
 after_success:
-    - swift package generate-xcodeproj
-    - WORKING_DIRECTORY=$(PWD) xcodebuild -toolchain org.swift.3020160831a -project MuttonChop.xcodeproj -scheme MuttonChop -sdk macosx10.12 -destination arch=x86_64 -configuration Debug -enableCodeCoverage YES test | xcpretty
-    - bash <(curl -s https://codecov.io/bash)
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then swift package generate-xcodeproj; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then xcodebuild -project MuttonChop.xcodeproj -scheme MuttonChop -sdk macosx10.12 -destination arch=x86_64 -configuration Debug -enableCodeCoverage YES test | xcpretty; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then bash <(curl -s https://codecov.io/bash); fi
