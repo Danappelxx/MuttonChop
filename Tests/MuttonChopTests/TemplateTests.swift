@@ -24,7 +24,7 @@ class TemplateTests: XCTestCase {
             "greeting": try Template("Hello, {{name}}")
         ]
         let string = "And then I said \"{{>greeting}}\"!"
-        let context: StructuredData = ["name": "Dan"]
+        let context: Context = ["name": "Dan"]
 
         let template = try Template(string)
         let rendered = template.render(with: context, partials: partials)

@@ -1,8 +1,8 @@
 // Stage 3 - Render AST to string
 
-@_exported import StructuredData
+@_exported import enum Axis.Map
 
-public typealias Context = StructuredData
+public typealias Context = Map
 
 fileprivate struct RenderingContext {
     let contextStack: [Context]

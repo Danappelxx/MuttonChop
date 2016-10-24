@@ -7,7 +7,7 @@
 //
 
 import XCTest
-import JSON
+import Axis
 @testable import MuttonChop
 #if os(Linux)
     import Glibc
@@ -15,31 +15,19 @@ import JSON
 
 extension Context {
     init(from json: String) throws {
-        try self.init(from: JSONParser().parse(data: json.data))
+        self = try Context.clean(JSONMapParser.parse(json.buffer))
     }
-    init(from json: JSON) {
-        switch json {
-        case let .array(array):
-            self = .array(array.map(Context.init(from:)))
-        case let .object(object):
-            self = .dictionary(object.mapValues(Context.init(from:)))
-        case let .number(number):
-            switch number {
-            case let .double(double) where floor(double) == double:
-                self = .int(Int(double))
-            case let .double(double):
-                self = .double(double)
-            case let .integer(int):
-                self = .int(int)
-            case let .unsignedInteger(int):
-                self = .int(Int(int))
-            }
-        case let .boolean(bool):
-            self = .bool(bool)
-        case let .string(string):
-            self = .string(string)
-        case .null:
-            fatalError("null is not supported")
+
+    static func clean(_ map: Map) -> Map {
+        switch map {
+        case .array(let array):
+            return Map(array.map(Context.clean))
+        case .dictionary(let dictionary):
+            return Map(dictionary.mapValues(Context.clean))
+        case .double(let double) where floor(double) == double:
+            return .int(Int(double))
+        default:
+            return map
         }
     }
 }
@@ -53,8 +41,8 @@ struct Test {
     let template: String
     let expected: String
 
-    init(json: JSON) throws {
-        name = try (json.get("name") as String)
+    init(map: Map) throws {
+        name = try (map.get("name") as String)
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "-", with: "_")
             .replacingOccurrences(of: ",", with: "_")
@@ -62,11 +50,11 @@ struct Test {
             .replacingOccurrences(of: ")", with: "")
 
 
-        description = try (json.get("desc") as String)
+        description = try (map.get("desc") as String)
             .replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
 
-        partials = try json["partials"]?.asDictionary()
+        partials = try map["partials"].asDictionary()
             .mapValues { try $0.asString() }
             .mapValues { $0
                 .replacingOccurrences(of: "\\\"", with: "\"")
@@ -75,21 +63,21 @@ struct Test {
                 .replacingOccurrences(of: "\r", with: "\\r")
                 .replacingOccurrences(of: "\n", with: "\\n") }
 
-        contextJSON = try JSONSerializer().serializeToString(json: .object(json.get("data")))
+        contextJSON = try String(buffer: JSONMapSerializer.serialize(.dictionary(map["data"].asDictionary())))
             .replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\t", with: "\\t")
             .replacingOccurrences(of: "\r", with: "\\r")
             .replacingOccurrences(of: "\n", with: "\\n")
 
-        template = try (json.get("template") as String)
+        template = try (map.get("template") as String)
             .replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\t", with: "\\t")
             .replacingOccurrences(of: "\r", with: "\\r")
             .replacingOccurrences(of: "\n", with: "\\n")
 
-        expected = try (json.get("expected") as String)
+        expected = try (map.get("expected") as String)
             .replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\t", with: "\\t")
@@ -116,15 +104,15 @@ class GenerateTests: XCTestCase {
     func generateTestSuite(_ suite: String) throws -> String {
 
         guard let file = Bundle.allBundles
-            .flatMap({ $0.url(forResource: suite, withExtension: "json") })
+            .flatMap({ $0.url(forResource: suite, withExtension: "map") })
             .first else {
                 fatalError()
         }
         let data = try Data(contentsOf: file)
 
-        let json = try JSONParser().parse(data: C7.Data(Array(data)))
-        let overview = try json["overview"]?.asString() ?? ""
-        let testsJSON = try json.get("tests") as [JSON]
+        let map = try JSONMapParser().parse(Buffer(Array(data)))!
+        let overview = (try? map["overview"].asString()) ?? ""
+        let testsJSON = try map.get("tests") as [Map]
 
         let tests = try testsJSON.map(Test.init)
         let testCases = tests.map(generateTestCase)
