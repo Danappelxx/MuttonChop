@@ -12,6 +12,6 @@ script:
   - swift build -c release
   - swift test
 after_success:
-  - swift package generate-xcodeproj
-  - xcodebuild -project MuttonChop.xcodeproj -scheme MuttonChop -sdk macosx10.12 -destination arch=x86_64 -configuration Debug -enableCodeCoverage YES test | xcpretty
-  - bash <(curl -s https://codecov.io/bash)
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then swift package generate-xcodeproj; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then xcodebuild -project MuttonChop.xcodeproj -scheme MuttonChop -sdk macosx10.12 -destination arch=x86_64 -configuration Debug -enableCodeCoverage YES test | xcpretty; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then bash <(curl -s https://codecov.io/bash); fi
