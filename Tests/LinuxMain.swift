@@ -1,6 +1,5 @@
 import XCTest
 @testable import MuttonChopTests
-@testable import SpecTests
 
 XCTMain([
     testCase(ReaderTests.allTests),
