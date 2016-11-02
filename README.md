@@ -6,11 +6,36 @@
 
 Mustache templates in Swift. 100% spec compliant. OSX and Linux supported.
 
+# Table of Contents
+
+   * [Features](#features)
+   * [Installation](#installation)
+   * [Usage](#usage)
+     * [Basic Template Usage](#basic-template-usage)
+     * [Template Collections](#template-collections)
+       * [Creation](#creation)
+       * [Fetching](#fetching)
+       * [Rendering](#rendering)
+     * [Mustache Language](#mustache-language)
+       * [Tags](#tags)
+       * [Variables (Interpolation)](#variables-interpolation)
+       * [Sections](#sections)
+       * [Inverted Sections](#inverted-sections)
+       * [Comments](#comments)
+       * [Partials](#partials)
+       * [Inheritance](#inheritance)
+   * [Tips](#tips)
+   * [Support](#support)
+   * [Contributing](#contributing)
+   * [License](#license)
+
+
 # Features
 
 - [x] Conforms entirely to the official [Mustache specification](https://github.com/mustache/spec).
 - [x] Compiles its templates, meaning that it only parses them once. This makes it very fast.
 - [x] Supports template inheritance, conforming to the [semi-official specification](https://github.com/mustache/spec/pull/75). Big thanks to [@groue](https://github.com/groue) for providing the inheritance algorithm.
+- [x] Has template collections to make work with multiple templates convenient
 - [ ] More coming soon! Do keep your eyes open.
 
 # Installation
@@ -54,13 +79,70 @@ let rendered = template.render(with: context)
 print(rendered) // -> Hello, Dan!
 ```
 
-## Tags
+## Template Collections
+
+Template collections are useful when there are multiple templates which are meant to work together (for example, views in a web application).
+
+### Creation
+
+Template collections can be created in several ways:
+
+```swift
+// label and load templates manually
+let collection = TemplateCollection(templates: [
+    "one": try Template(...),
+    "two": try Template(...)
+])
+```
+```swift
+// searches "<current directory>/Views" for .mustache files
+let collection = try TemplateCollection(directory: "Views")
+```
+```swift
+// searches "/path/to/my/templates/Views" for .mustache files
+let collection = try TemplateCollection(
+    basePath: "/path/to/my/templates",
+    directory: "Views"
+)
+```
+```swift
+// searches "<current directory>/Views" for .mustache and .html files
+let collection = try TemplateCollection(
+    directory: "Views",
+    fileExtensions: ["mustache", "html"]
+)
+```
+
+### Fetching
+
+Templates can be extracted from collections in one of two ways:
+
+```swift
+collection.templates["one"] // Template?
+```
+```swift
+try collection.get(template: "one") // Template
+```
+
+### Rendering
+
+Templates rendered in collections have the rest of the templates (including the template itself) registered as partials. Templates can be rendered like so:
+
+```swift
+try collection.render(template: "one", with: ["name": "Dan"])
+```
+
+## Mustache Language
+
+Below is a comprehensive reference of the Mustache language features supported by Muttonchop. Examples are included with in each section.
+
+### Tags
 
 Tags are denoted by two opening braces `{{`, followed by some content, delimited by two closing braces `}}`. The first non-whitespace character inside the tag denotes the type of the tag.
 
 The format for this section is: template, context, result. The syntax for doing all three is shown in the section above.
 
-## Variables (Interpolation)
+### Variables (Interpolation)
 
 Interpolation tags do not have a type-denoting character. The tag is replaced with the result of its content looked up in the context stack. If the context stack does not contain its value, the tag is simply ignored.
 
@@ -81,7 +163,7 @@ let context: Context = [
 Hello, world!
 ```
 
-## Sections
+### Sections
 
 Section tags start with an opening tag (`{{# section }}`) and end with a closing tag (`{{/ section }}`). Everything between the open and closing tags is the content.
 
@@ -109,7 +191,7 @@ Dan is 16 years old.
 Some numbers he knows are 1 2 3 4 5.
 ```
 
-## Inverted Sections
+### Inverted Sections
 
 An inverted section begins with an opening tag (`{{^ section }}`) and end with a closing tag (`{{/ section }}`). Everything between the tags is the content.
 
@@ -131,11 +213,11 @@ let context: Context = [
 There is no person!
 ```
 
-## Comments
+### Comments
 
 Comment tags (`{{! Some comment about something }}`) are not rendered, and are very useful for documenting your templates.
 
-## Partials
+### Partials
 
 A partial tag (`{{> partial }}`) inserts the contents of the template with the name of the partial in place of the tag. The partial has access to the same context stack.
 
@@ -186,7 +268,7 @@ Kyle is 16 years old.
 Some numbers he knows are 6 7 8 9 10.
 ```
 
-## Inheritance
+### Inheritance
 
 MuttonChop supports template inheritance. This is done through a combination of two tags: the partial override tag (`{{< partial }}{{/ partial }}`) and the block tag (`{{$ block }}{{/ block }}`).
 
