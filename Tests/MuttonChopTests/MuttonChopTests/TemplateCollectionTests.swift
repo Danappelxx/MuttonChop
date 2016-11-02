@@ -11,7 +11,7 @@ import Foundation
 @testable import MuttonChop
 
 var currentDirectory: String {
-    return (#file as NSString).deletingLastPathComponent + "/"
+    return (NSString(string: #file)).deletingLastPathComponent + "/"
 }
 
 func fixture(name: String) throws -> Template? {

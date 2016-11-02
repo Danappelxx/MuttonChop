@@ -27,7 +27,7 @@ extension TemplateCollection {
     public init(basePath: String = FileManager.default.currentDirectoryPath, directory: String, fileExtensions: [String] = ["mustache"]) throws {
         let path = basePath + directory
         let files = try FileManager.default.contentsOfDirectory(atPath: path)
-            .map { $0 as NSString }
+            .map { NSString(string: $0) }
 
         var templates = [String: Template]()
 
