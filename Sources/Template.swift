@@ -68,3 +68,8 @@ public struct Template {
         return Renderer(ast: ast, partials: partials.mapValues { $0.ast }).render(with: context)
     }
 }
+
+extension Template: Equatable {}
+public func ==(lhs: Template, rhs: Template) -> Bool {
+    return lhs.ast == rhs.ast
+}
