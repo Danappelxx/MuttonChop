@@ -3,9 +3,9 @@ public enum TemplateCollectionError: Error {
 }
 
 public struct TemplateCollection {
-    public var templates: [String:Template]
+    public var templates: [String: Template]
 
-    public init(templates: [String:Template] = [:]) {
+    public init(templates: [String: Template] = [:]) {
         self.templates = templates
     }
 
@@ -24,13 +24,13 @@ public struct TemplateCollection {
 // MARK: IO
 import Foundation
 extension TemplateCollection {
-    public init(basePath: String = FileManager.default.currentDirectoryPath, directory: String) throws {
+    public init(basePath: String = FileManager.default.currentDirectoryPath, directory: String, fileExtensions: [String] = ["mustache"]) throws {
         let path = basePath + directory
         let files = try FileManager.default.contentsOfDirectory(atPath: path)
 
-        var templates = [String:Template]()
+        var templates = [String: Template]()
 
-        for file in files where file.split(separator: ".").last == "mustache" {
+        for file in files where fileExtensions.contains((file as NSString).pathExtension) {
 
             guard
                 let handle = FileHandle(forReadingAtPath: "\(path)/\(file)"),
@@ -40,10 +40,7 @@ extension TemplateCollection {
             }
 
             let template = try Template(contents)
-            // remove .mustache extension
-            let name = file.split(separator: ".").dropLast().joined(separator: ".")
-
-            templates[name] = template
+            templates[(file as NSString).deletingPathExtension] = template
         }
 
         self.templates = templates

@@ -7,11 +7,13 @@
 //
 
 import XCTest
+import Foundation
 @testable import MuttonChop
 
 var currentDirectory: String {
-    return "/" + #file.characters.split(separator: "/").dropLast().map(String.init).joined(separator: "/") + "/"
+    return (#file as NSString).deletingLastPathComponent + "/"
 }
+
 func fixture(name: String) throws -> Template? {
     let path = currentDirectory + "fixtures/" + name
     guard let handle = FileHandle(forReadingAtPath: path),

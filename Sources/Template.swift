@@ -69,7 +69,8 @@ public struct Template {
     }
 }
 
-extension Template: Equatable {}
-public func ==(lhs: Template, rhs: Template) -> Bool {
-    return lhs.ast == rhs.ast
+extension Template: Equatable {
+    public static func ==(lhs: Template, rhs: Template) -> Bool {
+        return lhs.ast == rhs.ast
+    }
 }
