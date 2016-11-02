@@ -27,10 +27,11 @@ extension TemplateCollection {
     public init(basePath: String = FileManager.default.currentDirectoryPath, directory: String, fileExtensions: [String] = ["mustache"]) throws {
         let path = basePath + directory
         let files = try FileManager.default.contentsOfDirectory(atPath: path)
+            .map { $0 as NSString }
 
         var templates = [String: Template]()
 
-        for file in files where fileExtensions.contains((file as NSString).pathExtension) {
+        for file in files where fileExtensions.contains(file.pathExtension) {
 
             guard
                 let handle = FileHandle(forReadingAtPath: "\(path)/\(file)"),
@@ -40,7 +41,7 @@ extension TemplateCollection {
             }
 
             let template = try Template(contents)
-            templates[(file as NSString).deletingPathExtension] = template
+            templates[file.deletingPathExtension] = template
         }
 
         self.templates = templates
