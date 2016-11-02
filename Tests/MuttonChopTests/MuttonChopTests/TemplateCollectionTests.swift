@@ -15,7 +15,7 @@ var currentDirectory: String {
 }
 
 func fixture(name: String) throws -> Template? {
-    let path = currentDirectory + "fixtures/" + name
+    let path = currentDirectory + "Fixtures/" + name
     guard let handle = FileHandle(forReadingAtPath: path),
         let fixture = String(data: handle.readDataToEndOfFile(), encoding: .utf8) else {
             return nil
