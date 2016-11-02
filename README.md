@@ -45,7 +45,7 @@ import PackageDescription
 
 let package = Package(
     dependencies: [
-        .Package(url: "https://github.com/Danappelxx/MuttonChop.git", majorVersion: 0, minor: 2),
+        .Package(url: "https://github.com/Danappelxx/MuttonChop.git", majorVersion: 0, minor: 3),
     ]
 )
 ```
