@@ -24,17 +24,16 @@ public struct TemplateCollection {
 // MARK: IO
 import Foundation
 extension TemplateCollection {
-    public init(basePath: String = FileManager.default.currentDirectoryPath, directory: String, fileExtensions: [String] = ["mustache"]) throws {
-        let path = basePath + directory
-        let files = try FileManager.default.contentsOfDirectory(atPath: path)
+    public init(directory: String, fileExtensions: [String] = ["mustache"]) throws {
+        let files = try FileManager.default.contentsOfDirectory(atPath: directory)
             .map { NSString(string: $0) }
 
         var templates = [String: Template]()
 
         for file in files where fileExtensions.contains(file.pathExtension) {
-
+            let path = NSString(string: directory).appendingPathComponent(String(file))
             guard
-                let handle = FileHandle(forReadingAtPath: "\(path)/\(file)"),
+                let handle = FileHandle(forReadingAtPath: path),
                 let contents = String(data: handle.readDataToEndOfFile(), encoding: .utf8)
                 else {
                 continue

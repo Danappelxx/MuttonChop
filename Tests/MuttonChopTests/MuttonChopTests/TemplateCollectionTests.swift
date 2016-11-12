@@ -42,7 +42,7 @@ class TemplateCollectionTests: XCTestCase {
     }
 
     func testFileCollection() throws {
-        let collection = try TemplateCollection(basePath: currentDirectory, directory: "Fixtures")
+        let collection = try TemplateCollection(directory: currentDirectory + "Fixtures")
 
         try testGetting(for: collection)
         try testRendering(for: collection)
