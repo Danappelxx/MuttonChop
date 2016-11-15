@@ -45,7 +45,7 @@ import PackageDescription
 
 let package = Package(
     dependencies: [
-        .Package(url: "https://github.com/Danappelxx/MuttonChop.git", majorVersion: 0, minor: 3),
+        .Package(url: "https://github.com/Danappelxx/MuttonChop.git", majorVersion: 0, minor: 4),
     ]
 )
 ```
@@ -95,20 +95,13 @@ let collection = TemplateCollection(templates: [
 ])
 ```
 ```swift
-// searches "<current directory>/Views" for .mustache files
-let collection = try TemplateCollection(directory: "Views")
+// search directory for .mustache files
+let collection = try TemplateCollection(directory: "/path/to/Views")
 ```
 ```swift
-// searches "/path/to/my/templates/Views" for .mustache files
+// search directory for .mustache and .html files
 let collection = try TemplateCollection(
-    basePath: "/path/to/my/templates",
-    directory: "Views"
-)
-```
-```swift
-// searches "<current directory>/Views" for .mustache and .html files
-let collection = try TemplateCollection(
-    directory: "Views",
+    directory: "/path/to/Views",
     fileExtensions: ["mustache", "html"]
 )
 ```
