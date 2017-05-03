@@ -31,7 +31,7 @@ extension TemplateCollection {
         var templates = [String: Template]()
 
         for file in files where fileExtensions.contains(file.pathExtension) {
-            let path = NSString(string: directory).appendingPathComponent(String(file))
+            let path = NSString(string: directory).appendingPathComponent(String(describing: file))
             guard
                 let handle = FileHandle(forReadingAtPath: path),
                 let contents = String(data: handle.readDataToEndOfFile(), encoding: .utf8)
