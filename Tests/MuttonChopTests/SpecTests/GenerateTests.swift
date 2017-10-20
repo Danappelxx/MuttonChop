@@ -7,23 +7,23 @@
 //
 
 import XCTest
-import Axis
+import Zewo
 @testable import MuttonChop
 #if os(Linux)
     import Glibc
 #endif
-
+/*
 extension Context {
     init(from json: String) throws {
-        self = try Context.clean(JSONMapParser.parse(json.buffer))
+        self = try Context.clean(JSON(from:json.buffer, deadline: .never))
     }
 
-    static func clean(_ map: Map) -> Map {
+    static func clean(_ map: JSON) -> JSON {
         switch map {
         case .array(let array):
-            return Map(array.map(Context.clean))
-        case .dictionary(let dictionary):
-            return Map(dictionary.mapValues(Context.clean))
+            return JSON(arrayLiteral: map)
+        case .object(let dictionary):
+            return JSON(dictionaryLiteral: map)
         case .double(let double) where floor(double) == double:
             return .int(Int(double))
         default:
@@ -31,58 +31,73 @@ extension Context {
         }
     }
 }
+ */
 
 #if os(OSX)
-struct Test {
+    struct Test: Decodable {
     let name: String
     let description: String
     let partials: [String:String]?
     let contextJSON: String
     let template: String
     let expected: String
-
-    init(map: Map) throws {
-        name = try (map.get("name") as String)
-            .replacingOccurrences(of: " ", with: "")
+    
+    enum Key : String, CodingKey {
+        case name
+        case description
+        case partials
+        case contextJSON
+        case template
+        case expected
+    }
+    
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: Key.self)
+        let n  = try container.decode(String.self, forKey: .name)
+        name = n.replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "-", with: "_")
             .replacingOccurrences(of: ",", with: "_")
             .replacingOccurrences(of: "(", with: "_")
             .replacingOccurrences(of: ")", with: "")
-
-
-        description = try (map.get("desc") as String)
-            .replacingOccurrences(of: "\\\"", with: "\"")
+        let d = try container.decode(String.self, forKey: .description)
+        description = d.replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
-
-        partials = try map["partials"].asDictionary()
-            .mapValues { try $0.asString() }
-            .mapValues { $0
-                .replacingOccurrences(of: "\\\"", with: "\"")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-                .replacingOccurrences(of: "\t", with: "\\t")
-                .replacingOccurrences(of: "\r", with: "\\r")
-                .replacingOccurrences(of: "\n", with: "\\n") }
-
-        contextJSON = try String(buffer: JSONMapSerializer.serialize(.dictionary(map["data"].asDictionary())))
-            .replacingOccurrences(of: "\\\"", with: "\"")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-            .replacingOccurrences(of: "\t", with: "\\t")
-            .replacingOccurrences(of: "\r", with: "\\r")
-            .replacingOccurrences(of: "\n", with: "\\n")
-
-        template = try (map.get("template") as String)
-            .replacingOccurrences(of: "\\\"", with: "\"")
+        
+        let p: [String:String]? = try container.decode([String:String]?.self, forKey: .partials)
+        if let p = p {
+            partials = [:]
+            for (k,v) in p {
+                partials![k] = v.replacingOccurrences(of: "\\\"", with: "\"")
+                    .replacingOccurrences(of: "\"", with: "\\\"")
+                    .replacingOccurrences(of: "\t", with: "\\t")
+                    .replacingOccurrences(of: "\r", with: "\\r")
+                    .replacingOccurrences(of: "\n", with: "\\n")
+            }
+        } else {
+            partials = p
+        }
+        let c = try container.decode(String.self, forKey: .contextJSON)
+        contextJSON = c.replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\t", with: "\\t")
             .replacingOccurrences(of: "\r", with: "\\r")
             .replacingOccurrences(of: "\n", with: "\\n")
-
-        expected = try (map.get("expected") as String)
-            .replacingOccurrences(of: "\\\"", with: "\"")
+        
+        let t = try container.decode(String.self, forKey: .template)
+        template = t.replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\t", with: "\\t")
             .replacingOccurrences(of: "\r", with: "\\r")
             .replacingOccurrences(of: "\n", with: "\\n")
+        
+        let e = try container.decode(String.self, forKey: .expected)
+        expected = e.replacingOccurrences(of: "\\\"", with: "\"")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\t", with: "\\t")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\n", with: "\\n")
+    
     }
 }
 
@@ -101,6 +116,12 @@ class GenerateTests: XCTestCase {
         }
     }
 
+    struct TestOverview: Decodable {
+        var overview: String
+        var testJSON: [Test]
+    }
+    
+    
     func generateTestSuite(_ suite: String) throws -> String {
 
         guard let file = Bundle.allBundles
@@ -108,13 +129,19 @@ class GenerateTests: XCTestCase {
             .first else {
                 fatalError()
         }
-        let data = try Data(contentsOf: file)
+        //let data = try Data(contentsOf: file)
 
-        let map = try JSONMapParser().parse(Buffer(Array(data)))!
-        let overview = (try? map["overview"].asString()) ?? ""
-        let testsJSON = try map.get("tests") as [Map]
+        let str = try String(contentsOf: file)
+        
+        let map = try str.withBuffer { (b) -> JSON in
+            return try JSON(from: b, deadline: .never)
+        }
+        
+        let testOverview = try TestOverview(from: map)
+        
+        let overview = testOverview.overview
 
-        let tests = try testsJSON.map(Test.init)
+        let tests = testOverview.testJSON
         let testCases = tests.map(generateTestCase)
 
         let allTests = [

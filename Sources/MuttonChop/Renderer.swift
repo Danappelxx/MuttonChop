@@ -1,8 +1,9 @@
 // Stage 3 - Render AST to string
 
-@_exported import enum Axis.Map
+//@_exported import enum Axis.Map
+import Zewo
 
-public typealias Context = Map
+public typealias Context = JSON
 
 fileprivate struct RenderingContext {
     let contextStack: [Context]
@@ -44,7 +45,7 @@ fileprivate extension Context {
             return bool
         case let .array(array):
             return !array.isEmpty
-        case let .dictionary(dictionary):
+        case let .object(dictionary):
             return !dictionary.isEmpty
         default:
             return true
@@ -70,7 +71,7 @@ extension Sequence where Iterator.Element == Context {
             }
             for context in self {
                 if
-                    case let .dictionary(dictionary) = context,
+                    case let .object(dictionary) = context,
                     let value = dictionary[variable] {
                     return value
                 }
