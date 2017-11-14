@@ -52,7 +52,7 @@ extension String {
     func trimLeft(using characterSet: [Character]) -> String {
         var start = 0
 
-        for (index, character) in characters.enumerated() {
+        for (index, character) in enumerated() {
             if !characterSet.contains(character) {
                 start = index
                 break
@@ -63,9 +63,9 @@ extension String {
     }
 
     func trimRight(using characterSet: [Character]) -> String {
-        var end = characters.count
+        var end = count
 
-        for (index, character) in characters.reversed().enumerated() {
+        for (index, character) in reversed().enumerated() {
             if !characterSet.contains(character) {
                 end = index
                 break

@@ -8,7 +8,7 @@ let package = Package(
         .library(name: "MuttonChop", targets: ["MuttonChop"])
     ],
     dependencies: [
-        .package(url: "https://github.com/ratranqu/Zewo.git", .branch("swift-4"))
+    .package(url: "https://github.com/Zewo/Zewo.git", .branch("0.16.1"))
     ],
     targets: [
         .target(name: "MuttonChop", dependencies: ["Zewo"]),

@@ -5,44 +5,44 @@
         "package": "CBtls",
         "repositoryURL": "https://github.com/Zewo/CBtls.git",
         "state": {
-          "branch": "swift-4",
-          "revision": "846c10f17280289c847c773d19cc7f117e08387a",
-          "version": null
+          "branch": null,
+          "revision": "c97fb0387e445c0da32fb1509149ae236f8b740c",
+          "version": "1.1.0"
         }
       },
       {
         "package": "CLibdill",
         "repositoryURL": "https://github.com/Zewo/CLibdill.git",
         "state": {
-          "branch": "swift-4",
-          "revision": "99abdf553917e71ef4ed07eb603ad1ef9c6407e6",
-          "version": null
+          "branch": null,
+          "revision": "08292f2dbff76f51b4cf514124699611743e3cab",
+          "version": "2.0.0"
         }
       },
       {
         "package": "CLibreSSL",
         "repositoryURL": "https://github.com/Zewo/CLibreSSL.git",
         "state": {
-          "branch": "swift-4",
-          "revision": "24fbccc2fa38bfdc9718e3ad4aa94fe6e62312a1",
-          "version": null
+          "branch": null,
+          "revision": "ccf6f5bb4add4fdb2a36b8afab0c146d30d808f9",
+          "version": "3.1.0"
         }
       },
       {
         "package": "Venice",
         "repositoryURL": "https://github.com/Zewo/Venice.git",
         "state": {
-          "branch": "swift-4",
-          "revision": "6eb3bb646e0a763f0a7a9653ddfa492f3caf4279",
-          "version": null
+          "branch": null,
+          "revision": "3e78449dfefac3ab2952200ff8a4fa0165ef415a",
+          "version": "0.20.0"
         }
       },
       {
         "package": "Zewo",
-        "repositoryURL": "https://github.com/ratranqu/Zewo.git",
+        "repositoryURL": "https://github.com/Zewo/Zewo.git",
         "state": {
-          "branch": "swift-4",
-          "revision": "fcda4c750e3d92e041ea26e37bda3f3f54f26d16",
+          "branch": "0.16.1",
+          "revision": "44357a8a837a54ca531178adf975afc0e9d782c7",
           "version": null
         }
       }
