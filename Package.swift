@@ -8,7 +8,7 @@ let package = Package(
         .library(name: "MuttonChop", targets: ["MuttonChop"])
     ],
     dependencies: [
-    .package(url: "https://github.com/Zewo/Zewo.git", .branch("0.16.1"))
+    .package(url: "https://gitlab.com/katalysis-public/Zewo.git", from: "0.16.2")
     ],
     targets: [
         .target(name: "MuttonChop", dependencies: ["Zewo"]),
