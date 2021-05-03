@@ -150,7 +150,7 @@ final class SectionsTests: XCTestCase {
 
     func testListContexts() throws {
         let templateString = "{{#tops}}{{#middles}}{{tname.lower}}{{mname}}.{{#bottoms}}{{tname.upper}}{{mname}}{{bname}}.{{/bottoms}}{{/middles}}{{/tops}}"
-        let contextJSON = "{\"tops\":[{\"middles\":[{\"bottoms\":[{\"bname\":\"x\"},{\"bname\":\"y\"}],\"mname\":\"1\"}],\"tname\":{\"upper\":\"A\",\"lower\":\"a\"}}]}".data(using: .utf8)!
+        let contextJSON = "{\"tops\":[{\"middles\":[{\"mname\":\"1\",\"bottoms\":[{\"bname\":\"x\"},{\"bname\":\"y\"}]}],\"tname\":{\"lower\":\"a\",\"upper\":\"A\"}}]}".data(using: .utf8)!
         let expected = "a1.A1x.A1y."
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -789,7 +789,7 @@ final class InterpolationTests: XCTestCase {
 
     func testDottedNames_InitialResolution() throws {
         let templateString = "\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\""
-        let contextJSON = "{\"b\":{\"c\":{\"d\":{\"e\":{\"name\":\"Wrong\"}}}},\"a\":{\"b\":{\"c\":{\"d\":{\"e\":{\"name\":\"Phil\"}}}}}}".data(using: .utf8)!
+        let contextJSON = "{\"a\":{\"b\":{\"c\":{\"d\":{\"e\":{\"name\":\"Phil\"}}}}},\"b\":{\"c\":{\"d\":{\"e\":{\"name\":\"Wrong\"}}}}}".data(using: .utf8)!
         let expected = "\"Phil\" == \"Phil\""
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1502,7 +1502,7 @@ final class PartialsTests: XCTestCase {
             ("testStandaloneLineEndings", testStandaloneLineEndings),
             ("testStandaloneWithoutPreviousLine", testStandaloneWithoutPreviousLine),
             ("testStandaloneWithoutNewline", testStandaloneWithoutNewline),
-//            ("testStandaloneIndentation", testStandaloneIndentation),
+            ("testStandaloneIndentation", testStandaloneIndentation),
             ("testPaddingWhitespace", testPaddingWhitespace),
         ]
     }
@@ -1512,7 +1512,7 @@ final class PartialsTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "\"from partial\""
         let partials = try [
-            "text": Template("from partial")
+            "text": Template("from partial"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1539,7 +1539,7 @@ final class PartialsTests: XCTestCase {
         let contextJSON = "{\"text\":\"content\"}".data(using: .utf8)!
         let expected = "\"*content*\""
         let partials = try [
-            "partial": Template("*{{text}}*")
+            "partial": Template("*{{text}}*"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1551,10 +1551,10 @@ final class PartialsTests: XCTestCase {
 
     func testRecursion() throws {
         let templateString = "{{>node}}"
-        let contextJSON = "{\"nodes\":[{\"nodes\":[],\"content\":\"Y\"}],\"content\":\"X\"}".data(using: .utf8)!
+        let contextJSON = "{\"content\":\"X\",\"nodes\":[{\"content\":\"Y\",\"nodes\":[]}]}".data(using: .utf8)!
         let expected = "X<Y<>>"
         let partials = try [
-            "node": Template("{{content}}<{{#nodes}}{{>node}}{{/nodes}}>")
+            "node": Template("{{content}}<{{#nodes}}{{>node}}{{/nodes}}>"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1569,7 +1569,7 @@ final class PartialsTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "| \t|\t |"
         let partials = try [
-            "partial": Template("\t|\t")
+            "partial": Template("\t|\t"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1584,7 +1584,7 @@ final class PartialsTests: XCTestCase {
         let contextJSON = "{\"data\":\"|\"}".data(using: .utf8)!
         let expected = "  |  >\n>\n"
         let partials = try [
-            "partial": Template(">\n>")
+            "partial": Template(">\n>"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1599,7 +1599,7 @@ final class PartialsTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "|\r\n>|"
         let partials = try [
-            "partial": Template(">")
+            "partial": Template(">"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1614,7 +1614,7 @@ final class PartialsTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "  >\n  >>"
         let partials = try [
-            "partial": Template(">\n>")
+            "partial": Template(">\n>"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1629,7 +1629,7 @@ final class PartialsTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = ">\n  >\n  >"
         let partials = try [
-            "partial": Template(">\n>")
+            "partial": Template(">\n>"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1639,27 +1639,27 @@ final class PartialsTests: XCTestCase {
         XCTAssertEqual(rendered, expected, "Standalone tags should not require a newline to follow them.")
     }
 
-//    func testStandaloneIndentation() throws {
-//        let templateString = "\\n {{>partial}}\n/\n"
-//        let contextJSON = "{\"content\":\"<\n->\"}".data(using: .utf8)!
-//        let expected = "\\n |\n <\n->\n |\n/\n"
-//        let partials = try [
-//            "partial": Template("|\n{{{content}}}\n|\n")
-//        ]
-//
-//        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
-//        let template = try Template(templateString)
-//        let rendered = template.render(with: context, partials: partials)
-//
-//        XCTAssertEqual(rendered, expected, "Each line of the partial should be indented before rendering.")
-//    }
+    func testStandaloneIndentation() throws {
+        let templateString = "\\n {{>partial}}\n/\n"
+        let contextJSON = "{\"content\":\"<\n->\"}".data(using: .utf8)!
+        let expected = "\\n |\n <\n->\n |\n/\n"
+        let partials = try [
+            "partial": Template("|\n{{{content}}}\n|\n"),
+        ]
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
+
+        XCTAssertEqual(rendered, expected, "Each line of the partial should be indented before rendering.")
+    }
 
     func testPaddingWhitespace() throws {
         let templateString = "|{{> partial }}|"
         let contextJSON = "{\"boolean\":true}".data(using: .utf8)!
         let expected = "|[]|"
         let partials = try [
-            "partial": Template("[]")
+            "partial": Template("[]"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1755,7 +1755,7 @@ final class DelimitersTests: XCTestCase {
         let contextJSON = "{\"value\":\"yes\"}".data(using: .utf8)!
         let expected = "[ .yes. ]\n[ .yes. ]\n"
         let partials = try [
-            "include": Template(".{{value}}.")
+            "include": Template(".{{value}}."),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1770,7 +1770,7 @@ final class DelimitersTests: XCTestCase {
         let contextJSON = "{\"value\":\"yes\"}".data(using: .utf8)!
         let expected = "[ .yes.  .yes. ]\n[ .yes.  .|value|. ]\n"
         let partials = try [
-            "include": Template(".{{value}}. {{= | | =}} .|value|.")
+            "include": Template(".{{value}}. {{= | | =}} .|value|."),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2029,7 +2029,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "default content"
         let partials = try [
-            "include": Template("{{$foo}}default content{{/foo}}")
+            "include": Template("{{$foo}}default content{{/foo}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2044,7 +2044,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "...sub template title..."
         let partials = try [
-            "super": Template("...{{$title}}Default title{{/title}}...")
+            "super": Template("...{{$title}}Default title{{/title}}..."),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2059,7 +2059,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{\"var\":\"var in data\"}".data(using: .utf8)!
         let expected = "var in template"
         let partials = try [
-            "include": Template("{{$var}}var in include{{/var}}")
+            "include": Template("{{$var}}var in include{{/var}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2074,7 +2074,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{\"var\":\"var in data\"}".data(using: .utf8)!
         let expected = "var in include"
         let partials = try [
-            "include": Template("{{$var}}var in include{{/var}}")
+            "include": Template("{{$var}}var in include{{/var}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2089,7 +2089,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "test override"
         let partials = try [
-            "parent": Template("{{$stuff}}...{{/stuff}}")
+            "parent": Template("{{$stuff}}...{{/stuff}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2104,7 +2104,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "test |override1 default| |override2 default|\n"
         let partials = try [
-            "parent": Template("|{{$stuff}}...{{/stuff}}{{$default}} default{{/default}}|")
+            "parent": Template("|{{$stuff}}...{{/stuff}}{{$default}} default{{/default}}|"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2119,7 +2119,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "peaked\n\n:(\n"
         let partials = try [
-            "parent": Template("{{$ballmer}}peaking{{/ballmer}}")
+            "parent": Template("{{$ballmer}}peaking{{/ballmer}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2134,7 +2134,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "stop:\n  hammer time\n"
         let partials = try [
-            "parent": Template("stop:\n  {{$nineties}}collaborate and listen{{/nineties}}\n")
+            "parent": Template("stop:\n  {{$nineties}}collaborate and listen{{/nineties}}\n"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2149,7 +2149,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "new default one, override two"
         let partials = try [
-            "parent": Template("{{$stuff}}new default one{{/stuff}}, {{$stuff2}}new default two{{/stuff2}}")
+            "parent": Template("{{$stuff}}new default one{{/stuff}}, {{$stuff2}}new default two{{/stuff2}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2164,7 +2164,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "default content|default content"
         let partials = try [
-            "parent": Template("{{$foo}}default content{{/foo}}")
+            "parent": Template("{{$foo}}default content{{/foo}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2180,7 +2180,7 @@ final class InheritanceTests: XCTestCase {
         let expected = "override override override don't recurse"
         let partials = try [
             "parent2": Template("{{$foo}}parent2 default content{{/foo}} {{<parent}}{{$bar}}don't recurse{{/bar}}{{/parent}}"),
-            "parent": Template("{{$foo}}default content{{/foo}} {{$bar}}{{<parent2}}{{/parent2}}{{/bar}}")
+            "parent": Template("{{$foo}}default content{{/foo}} {{$bar}}{{<parent2}}{{/parent2}}{{/bar}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2195,9 +2195,9 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "c"
         let partials = try [
-            "parent": Template("{{<older}}{{$a}}p{{/a}}{{/older}}"),
+            "grandParent": Template("{{$a}}g{{/a}}"),
             "older": Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}"),
-            "grandParent": Template("{{$a}}g{{/a}}")
+            "parent": Template("{{<older}}{{$a}}p{{/a}}{{/older}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2212,9 +2212,9 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "p"
         let partials = try [
-            "parent": Template("{{<older}}{{$a}}p{{/a}}{{/older}}"),
             "grandParent": Template("{{$a}}g{{/a}}"),
-            "older": Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}")
+            "older": Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}"),
+            "parent": Template("{{<older}}{{$a}}p{{/a}}{{/older}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2229,7 +2229,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "hmm"
         let partials = try [
-            "parent": Template("{{$foo}}default content{{/foo}}")
+            "parent": Template("{{$foo}}default content{{/foo}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -2244,7 +2244,7 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "default content"
         let partials = try [
-            "parent": Template("{{$foo}}default content{{/foo}}")
+            "parent": Template("{{$foo}}default content{{/foo}}"),
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)

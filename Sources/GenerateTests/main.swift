@@ -65,6 +65,60 @@ struct Test: Decodable {
     }
 }
 
+let testSuiteTemplateString = """
+    /**
+    {{&overview}}
+     */
+    final class {{suite}}Tests: XCTestCase {
+    {{&allTests}}
+    {{#tests}}
+
+    {{&.}}
+    {{/tests}}
+    }
+    """
+
+let allTestsTemplateString = """
+        static var allTests: [(String, ({{suite}}Tests) -> () throws -> Void)] {
+            return [
+            {{#tests}}
+                ("test{{.}}", test{{.}}),
+            {{/tests}}
+            ]
+        }
+    """
+
+let testCaseTemplateString = """
+        {{={| |}=}}
+        func test{|name|}() throws {
+            let templateString = "{|&template|}"
+            let contextJSON = "{|&contextJSON|}".data(using: .utf8)!
+            let expected = "{|&expected|}"
+            {|#hasPartials|}
+            let partials = try [
+            {|#partials|}
+                "{|name|}": Template("{|&value|}"),
+            {|/partials|}
+            ]
+            {|/hasPartials|}
+
+            let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+            let template = try Template(templateString)
+            {|#hasPartials|}
+            let rendered = template.render(with: context, partials: partials)
+            {|/hasPartials|}
+            {|^hasPartials|}
+            let rendered = template.render(with: context)
+            {|/hasPartials|}
+
+            XCTAssertEqual(rendered, expected, "{|&description|}")
+        }
+    """
+
+let testSuiteTemplate = try Template(testSuiteTemplateString)
+let allTestsTemplate = try Template(allTestsTemplateString)
+let testCaseTemplate = try Template(testCaseTemplateString)
+
 struct TestSuite: Decodable {
     let overview: String
     let tests: [Test]
@@ -79,49 +133,30 @@ func generateTestSuite(_ suite: String) throws -> String {
 
     let testCases = testSuite.tests.map(generateTestCase)
 
-    let allTests = [
-        "    static var allTests: [(String, (\(suite)Tests) -> () throws -> Void)] {",
-        "        return [",
-        (testSuite.tests.map { test in
-        "            (\"test\(test.name)\", test\(test.name)),"
-        }.joined(separator: "\n")),
-        "        ]",
-        "    }"
-    ].joined(separator: "\n")
+    let allTests = allTestsTemplate.render(with: [
+        "suite": .string(suite),
+        "tests": .array(testSuite.tests.map { .string($0.name) })
+    ])
 
-    return [
-        "/**",
-        "\(testSuite.overview)",
-        " */",
-        "final class \(suite)Tests: XCTestCase {",
-        allTests,
-        "",
-        testCases.joined(separator: "\n\n"),
-        "}",
-    ].joined(separator: "\n")
+    return testSuiteTemplate.render(with: [
+        "overview": .string(testSuite.overview),
+        "suite": .string(suite),
+        "allTests": .string(allTests),
+        "tests": .array(testCases.map { .string($0) })
+    ])
 }
 
 func generateTestCase(test: Test) -> String {
-    return [
-        "    func test\(test.name)() throws {",
-        "        let templateString = \"\(test.template)\"",
-        "        let contextJSON = \"\(test.contextJSON)\".data(using: .utf8)!",
-        "        let expected = \"\(test.expected)\"",
-        (test.partials?.isEmpty ?? true
-            ? ""
-            : "        let partials = try [\n" + test.partials!.map { key, value in
-              "            \"\(key)\": Template(\"\(value)\")"
-                }.joined(separator: ",\n") + "\n        ]\n"
-        ),
-        "        let context = try JSONDecoder().decode(Context.self, from: contextJSON)",
-        "        let template = try Template(templateString)",
-        (test.partials?.isEmpty ?? true
-            ? "        let rendered = template.render(with: context)"
-            : "        let rendered = template.render(with: context, partials: partials)"),
-        "",
-        "        XCTAssertEqual(rendered, expected, \"\(test.description)\")",
-        "    }",
-    ].joined(separator: "\n")
+    let partials: [String:String] = test.partials ?? [:]
+    return testCaseTemplate.render(with: [
+        "name": .string(test.name),
+        "contextJSON": .string(test.contextJSON),
+        "expected": .string(test.expected),
+        "hasPartials": .bool(!partials.isEmpty),
+        "partials": .array(partials.map { .dictionary(["name": .string($0.0), "value": .string($0.1)])}),
+        "description": .string(test.description),
+        "template": .string(test.template)
+    ])
 }
 
 let suites = ["Sections", "Interpolation", "Inverted", "Comments", "Partials", "Delimiters", "Inheritance"]
