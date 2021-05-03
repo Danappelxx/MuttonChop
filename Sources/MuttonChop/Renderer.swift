@@ -42,6 +42,8 @@ fileprivate extension Context {
             return !array.isEmpty
         case let .dictionary(dictionary):
             return !dictionary.isEmpty
+        case .null:
+            return false
         default:
             return true
         }
