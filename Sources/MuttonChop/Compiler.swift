@@ -15,7 +15,7 @@ public func ==(lhs: ASTNode, rhs: ASTNode) -> Bool {
     switch (lhs, rhs) {
     case let (.text(la), .text(ra)): return la == ra
     case let (.variable(la, lb), .variable(ra, rb)): return la == ra && lb == rb
-    case let (.partial(la), .partial(ra)): return la == ra
+    case let (.partial(la, lb), .partial(ra, rb)): return la == ra && lb == rb
     case let (.section(la, lb), .section(ra, rb)): return la == ra && lb == rb
     case let (.invertedSection(la, lb), .invertedSection(ra, rb)): return la == ra && lb == rb
     case let (.override(la, lb), .override(ra, rb)): return la == ra && lb == rb

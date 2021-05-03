@@ -29,7 +29,7 @@ public func escapeHTML(_ string: String) -> String {
         "\"": "&quot;",
         ]
     var escaped = ""
-    for c in string.characters {
+    for c in string {
         if let escapedString = escapeTable[c] {
             escaped += escapedString
         } else {

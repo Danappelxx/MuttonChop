@@ -12,7 +12,7 @@ public final class Reader {
     }
 
     public convenience init(_ string: String) {
-        self.init(AnyIterator(string.characters.makeIterator()))
+        self.init(AnyIterator(string.makeIterator()))
     }
 
     public func peek(_ n: Int) -> [Character] {

@@ -1,9 +1,5 @@
 // Stage 3 - Render AST to string
 
-@_exported import enum Axis.Map
-
-public typealias Context = Map
-
 fileprivate struct RenderingContext {
     let contextStack: [Context]
     let overrideStack: [(identifier: String, ast: AST)]
@@ -61,7 +57,7 @@ extension RenderingContext {
 extension Sequence where Iterator.Element == Context {
     // TODO: clean this up
     func value(of variable: String) -> Context? {
-        let components = variable.characters.split(separator: ".").map({ String($0) })
+        let components = variable.split(separator: ".").map({ String($0) })
 
         switch components.count {
         case 1:
@@ -274,7 +270,7 @@ fileprivate extension Renderer {
                 return node
             }
 
-            return .text(text.characters.split(separator: "\n", omittingEmptySubsequences: false).map(String.init(_:)).map { indentation + $0 }.joined(separator: "\n"))
+            return .text(text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init(_:)).map { indentation + $0 }.joined(separator: "\n"))
         }
     }
 }

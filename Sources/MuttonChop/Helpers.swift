@@ -52,26 +52,26 @@ extension String {
     func trimLeft(using characterSet: [Character]) -> String {
         var start = 0
 
-        for (index, character) in characters.enumerated() {
+        for (index, character) in self.enumerated() {
             if !characterSet.contains(character) {
                 start = index
                 break
             }
         }
 
-        return self[index(startIndex, offsetBy: start) ..< endIndex]
+        return String(self[index(startIndex, offsetBy: start) ..< endIndex])
     }
 
     func trimRight(using characterSet: [Character]) -> String {
-        var end = characters.count
+        var end = self.count
 
-        for (index, character) in characters.reversed().enumerated() {
+        for (index, character) in self.reversed().enumerated() {
             if !characterSet.contains(character) {
                 end = index
                 break
             }
         }
 
-        return self[startIndex ..< index(endIndex, offsetBy: -end)]
+        return String(self[startIndex ..< index(endIndex, offsetBy: -end)])
     }
 }
