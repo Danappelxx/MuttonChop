@@ -1,10 +1,10 @@
 # MuttonChop
 
-[![Swift][swift-badge]][platform-url] [![Platform][platform-badge]][platform-url] [![License][mit-badge]][mit-url] [![Travis][travis-badge]][travis-url] [![Codebeat][codebeat-badge]][codebeat-url] [![Codecov][codecov-badge]][codecov-url]
+[![Swift][swift-badge]][platform-url] [![Platform][platform-badge]][platform-url] [![License][mit-badge]][mit-url] [![Codebeat][codebeat-badge]][codebeat-url]
 
 > Mutton Chops are synonymous to Sideburns. Sideburns are kind of similar to Mustaches.
 
-Mustache templates in Swift. 100% spec compliant. OSX and Linux supported.
+Mustache templates in Swift. 100% spec compliant. Linux and macOS supported.
 
 # Table of Contents
 
@@ -34,23 +34,18 @@ Mustache templates in Swift. 100% spec compliant. OSX and Linux supported.
 
 - [x] Conforms entirely to the official [Mustache specification](https://github.com/mustache/spec).
 - [x] Compiles its templates, meaning that it only parses them once. This makes it very fast.
-- [x] Supports template inheritance, conforming to the [semi-official specification](https://github.com/mustache/spec/pull/75). Big thanks to [@groue](https://github.com/groue) for providing the inheritance algorithm.
+- [x] Supports template inheritance, conforming to the [optional specification](https://github.com/mustache/spec/pull/125). Big thanks to [@groue](https://github.com/groue) for providing the inheritance algorithm.
 - [x] Has template collections to make work with multiple templates convenient
 - [ ] More coming soon! Do keep your eyes open.
 
 # Installation
 
 ```swift
-import PackageDescription
-
-let package = Package(
-    dependencies: [
-        .Package(url: "https://github.com/Danappelxx/MuttonChop.git", majorVersion: 0, minor: 4),
-    ]
-)
+// Package.swift
+.Package(url: "https://github.com/Danappelxx/MuttonChop.git", majorVersion: 0, minor: 5),
 ```
 
-MuttonChop works best with Swift 3.0. Compatibility with previous/future snapshots/releases is not guaranteed.
+MuttonChop works best with Swift 5.4. Compatibility with previous/future snapshots/releases is not guaranteed.
 
 # Usage
 
@@ -70,7 +65,7 @@ let context: Context = [
 ]
 ```
 
-Notice how the type of context is `Context`. `Context` is a typealias (for clarity) to `Map`, which is an intermediate type from [Zewo](https://github.com/Zewo/Zewo) that can be converted to and from other data types such as JSON, XML, YAML, and so on. It is used in MuttonChop to provide easy compatibility with Zewo modules, but can be trivially converted to and from other representations.
+Notice how the type of context is [`Context`](https://github.com/Danappelxx/MuttonChop/blob/master/Sources/Context.swift). [`Context`](https://github.com/Danappelxx/MuttonChop/blob/master/Sources/Context.swift) is a JSON-like tree structure which conforms to [Codable](https://developer.apple.com/documentation/foundation/archives_and_serialization/encoding_and_decoding_custom_types), so you can either build it by hand or from an external source.
 
 We can then render the template with the context like such:
 
@@ -300,10 +295,6 @@ Looks like somebody forgot to add meaningful content!
 
 Parsing is slow and unoptimized. Rendering is fast and optimized. Take advantage of the fact that MuttonChop compiles the templates and only create a single instance of a template (which you can render many times).
 
-# Support
-
-If you need any help; feel free to email me, make an issue, or talk to me at the [Zewo Slack](http://slack.zewo.io).
-
 # Contributing
 
 Any and all help is very welcome, I promise I won't bite. Contributing is more than just code! If you have any ideas at all, please do make an issue and/or pull request.
@@ -314,13 +305,9 @@ MIT - more information is in the LICENSE file.
 
 [codebeat-badge]: https://codebeat.co/badges/102d7671-84ec-4af2-b82c-b64844ad5e2b
 [codebeat-url]: https://codebeat.co/projects/github-com-danappelxx-muttonchop
-[codecov-badge]: https://codecov.io/gh/Danappelxx/MuttonChop/branch/master/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/Danappelxx/MuttonChop
 [mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg?style=flat
 [mit-url]: https://tldrlegal.com/license/mit-license
-[platform-badge]: https://img.shields.io/badge/Platforms-OS%20X%20--%20Linux-lightgray.svg?style=flat
+[platform-badge]: https://img.shields.io/badge/Platforms-macOS%20--%20Linux-lightgray.svg?style=flat
 [platform-url]: https://swift.org
-[swift-badge]: https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat
+[swift-badge]: https://img.shields.io/badge/Swift-5.4-orange.svg?style=flat
 [swift-url]: https://swift.org
-[travis-badge]: https://travis-ci.org/Danappelxx/MuttonChop.svg?branch=master
-[travis-url]: https://travis-ci.org/Danappelxx/MuttonChop
