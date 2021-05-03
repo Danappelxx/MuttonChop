@@ -31,6 +31,7 @@ struct Test: Decodable {
         description = try container.decode(String.self, forKey: .description)
             .replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: " ")
 
         partials = try container.decodeIfPresent([String:String].self, forKey: .partials)?
             .mapValues { $0
@@ -42,8 +43,8 @@ struct Test: Decodable {
 
         let context = try container.decode(Context.self, forKey: .context)
         contextJSON = try String(data: JSONEncoder().encode(context), encoding: .utf8)!
-            .replacingOccurrences(of: "\\\"", with: "\"")
             .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\\\\\"", with: "\\\\\\\"")
             .replacingOccurrences(of: "\t", with: "\\t")
             .replacingOccurrences(of: "\r", with: "\\r")
             .replacingOccurrences(of: "\n", with: "\\n")

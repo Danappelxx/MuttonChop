@@ -45,7 +45,11 @@ final class SectionsTests: XCTestCase {
         return [
             ("testTruthy", testTruthy),
             ("testFalsey", testFalsey),
+            ("testNullisfalsey", testNullisfalsey),
             ("testContext", testContext),
+            ("testParentcontexts", testParentcontexts),
+            ("testVariabletest", testVariabletest),
+            ("testListContexts", testListContexts),
             ("testDeeplyNestedContexts", testDeeplyNestedContexts),
             ("testList", testList),
             ("testEmptyList", testEmptyList),
@@ -96,6 +100,18 @@ final class SectionsTests: XCTestCase {
         XCTAssertEqual(rendered, expected, "Falsey sections should have their contents omitted.")
     }
 
+    func testNullisfalsey() throws {
+        let templateString = "\"{{#null}}This should not be rendered.{{/null}}\""
+        let contextJSON = "{\"null\":null}".data(using: .utf8)!
+        let expected = "\"\""
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Null is falsey.")
+    }
+
     func testContext() throws {
         let templateString = "\"{{#context}}Hi {{name}}.{{/context}}\""
         let contextJSON = "{\"context\":{\"name\":\"Joe\"}}".data(using: .utf8)!
@@ -108,10 +124,46 @@ final class SectionsTests: XCTestCase {
         XCTAssertEqual(rendered, expected, "Objects and hashes should be pushed onto the context stack.")
     }
 
+    func testParentcontexts() throws {
+        let templateString = "\"{{#sec}}{{a}}, {{b}}, {{c.d}}{{/sec}}\""
+        let contextJSON = "{\"sec\":{\"b\":\"bar\"},\"b\":\"wrong\",\"c\":{\"d\":\"baz\"},\"a\":\"foo\"}".data(using: .utf8)!
+        let expected = "\"foo, bar, baz\""
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Names missing in the current context are looked up in the stack.")
+    }
+
+    func testVariabletest() throws {
+        let templateString = "\"{{#foo}}{{.}} is {{foo}}{{/foo}}\""
+        let contextJSON = "{\"foo\":\"bar\"}".data(using: .utf8)!
+        let expected = "\"bar is bar\""
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Non-false sections have their value at the top of context, accessible as {{.}} or through the parent context. This gives a simple way to display content conditionally if a variable exists. ")
+    }
+
+    func testListContexts() throws {
+        let templateString = "{{#tops}}{{#middles}}{{tname.lower}}{{mname}}.{{#bottoms}}{{tname.upper}}{{mname}}{{bname}}.{{/bottoms}}{{/middles}}{{/tops}}"
+        let contextJSON = "{\"tops\":[{\"middles\":[{\"bottoms\":[{\"bname\":\"x\"},{\"bname\":\"y\"}],\"mname\":\"1\"}],\"tname\":{\"upper\":\"A\",\"lower\":\"a\"}}]}".data(using: .utf8)!
+        let expected = "a1.A1x.A1y."
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "All elements on the context stack should be accessible within lists.")
+    }
+
     func testDeeplyNestedContexts() throws {
-        let templateString = "{{#a}}\n{{one}}\n{{#b}}\n{{one}}{{two}}{{one}}\n{{#c}}\n{{one}}{{two}}{{three}}{{two}}{{one}}\n{{#d}}\n{{one}}{{two}}{{three}}{{four}}{{three}}{{two}}{{one}}\n{{#e}}\n{{one}}{{two}}{{three}}{{four}}{{five}}{{four}}{{three}}{{two}}{{one}}\n{{/e}}\n{{one}}{{two}}{{three}}{{four}}{{three}}{{two}}{{one}}\n{{/d}}\n{{one}}{{two}}{{three}}{{two}}{{one}}\n{{/c}}\n{{one}}{{two}}{{one}}\n{{/b}}\n{{one}}\n{{/a}}\n"
-        let contextJSON = "{\"d\":{\"four\":4},\"b\":{\"two\":2},\"e\":{\"five\":5},\"c\":{\"three\":3},\"a\":{\"one\":1}}".data(using: .utf8)!
-        let expected = "1\n121\n12321\n1234321\n123454321\n1234321\n12321\n121\n1\n"
+        let templateString = "{{#a}}\n{{one}}\n{{#b}}\n{{one}}{{two}}{{one}}\n{{#c}}\n{{one}}{{two}}{{three}}{{two}}{{one}}\n{{#d}}\n{{one}}{{two}}{{three}}{{four}}{{three}}{{two}}{{one}}\n{{#five}}\n{{one}}{{two}}{{three}}{{four}}{{five}}{{four}}{{three}}{{two}}{{one}}\n{{one}}{{two}}{{three}}{{four}}{{.}}6{{.}}{{four}}{{three}}{{two}}{{one}}\n{{one}}{{two}}{{three}}{{four}}{{five}}{{four}}{{three}}{{two}}{{one}}\n{{/five}}\n{{one}}{{two}}{{three}}{{four}}{{three}}{{two}}{{one}}\n{{/d}}\n{{one}}{{two}}{{three}}{{two}}{{one}}\n{{/c}}\n{{one}}{{two}}{{one}}\n{{/b}}\n{{one}}\n{{/a}}\n"
+        let contextJSON = "{\"b\":{\"two\":2},\"c\":{\"three\":3,\"d\":{\"four\":4,\"five\":5}},\"a\":{\"one\":1}}".data(using: .utf8)!
+        let expected = "1\n121\n12321\n1234321\n123454321\n12345654321\n123454321\n1234321\n12321\n121\n1\n"
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
         let template = try Template(templateString)
@@ -428,6 +480,9 @@ final class InterpolationTests: XCTestCase {
             ("testBasicDecimalInterpolation", testBasicDecimalInterpolation),
             ("testTripleMustacheDecimalInterpolation", testTripleMustacheDecimalInterpolation),
             ("testAmpersandDecimalInterpolation", testAmpersandDecimalInterpolation),
+            ("testBasicNullInterpolation", testBasicNullInterpolation),
+            ("testTripleMustacheNullInterpolation", testTripleMustacheNullInterpolation),
+            ("testAmpersandNullInterpolation", testAmpersandNullInterpolation),
             ("testBasicContextMissInterpolation", testBasicContextMissInterpolation),
             ("testTripleMustacheContextMissInterpolation", testTripleMustacheContextMissInterpolation),
             ("testAmpersandContextMissInterpolation", testAmpersandContextMissInterpolation),
@@ -438,6 +493,12 @@ final class InterpolationTests: XCTestCase {
             ("testDottedNames_BrokenChains", testDottedNames_BrokenChains),
             ("testDottedNames_BrokenChainResolution", testDottedNames_BrokenChainResolution),
             ("testDottedNames_InitialResolution", testDottedNames_InitialResolution),
+            ("testDottedNames_ContextPrecedence", testDottedNames_ContextPrecedence),
+            ("testImplicitIterators_BasicInterpolation", testImplicitIterators_BasicInterpolation),
+            ("testImplicitIterators_HTMLEscaping", testImplicitIterators_HTMLEscaping),
+            ("testImplicitIterators_TripleMustache", testImplicitIterators_TripleMustache),
+            ("testImplicitIterators_Ampersand", testImplicitIterators_Ampersand),
+            ("testImplicitIterators_BasicIntegerInterpolation", testImplicitIterators_BasicIntegerInterpolation),
             ("testInterpolation_SurroundingWhitespace", testInterpolation_SurroundingWhitespace),
             ("testTripleMustache_SurroundingWhitespace", testTripleMustache_SurroundingWhitespace),
             ("testAmpersand_SurroundingWhitespace", testAmpersand_SurroundingWhitespace),
@@ -582,6 +643,42 @@ final class InterpolationTests: XCTestCase {
         XCTAssertEqual(rendered, expected, "Decimals should interpolate seamlessly with proper significance.")
     }
 
+    func testBasicNullInterpolation() throws {
+        let templateString = "I ({{cannot}}) be seen!"
+        let contextJSON = "{\"cannot\":null}".data(using: .utf8)!
+        let expected = "I () be seen!"
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Nulls should interpolate as the empty string.")
+    }
+
+    func testTripleMustacheNullInterpolation() throws {
+        let templateString = "I ({{{cannot}}}) be seen!"
+        let contextJSON = "{\"cannot\":null}".data(using: .utf8)!
+        let expected = "I () be seen!"
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Nulls should interpolate as the empty string.")
+    }
+
+    func testAmpersandNullInterpolation() throws {
+        let templateString = "I ({{&cannot}}) be seen!"
+        let contextJSON = "{\"cannot\":null}".data(using: .utf8)!
+        let expected = "I () be seen!"
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Nulls should interpolate as the empty string.")
+    }
+
     func testBasicContextMissInterpolation() throws {
         let templateString = "I ({{cannot}}) be seen!"
         let contextJSON = "{}".data(using: .utf8)!
@@ -680,7 +777,7 @@ final class InterpolationTests: XCTestCase {
 
     func testDottedNames_BrokenChainResolution() throws {
         let templateString = "\"{{a.b.c.name}}\" == \"\""
-        let contextJSON = "{\"c\":{\"name\":\"Jim\"},\"a\":{\"b\":{}}}".data(using: .utf8)!
+        let contextJSON = "{\"a\":{\"b\":{}},\"c\":{\"name\":\"Jim\"}}".data(using: .utf8)!
         let expected = "\"\" == \"\""
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -700,6 +797,78 @@ final class InterpolationTests: XCTestCase {
         let rendered = template.render(with: context)
 
         XCTAssertEqual(rendered, expected, "The first part of a dotted name should resolve as any other name.")
+    }
+
+    func testDottedNames_ContextPrecedence() throws {
+        let templateString = "{{#a}}{{b.c}}{{/a}}"
+        let contextJSON = "{\"b\":{\"c\":\"ERROR\"},\"a\":{\"b\":{}}}".data(using: .utf8)!
+        let expected = ""
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Dotted names should be resolved against former resolutions.")
+    }
+
+    func testImplicitIterators_BasicInterpolation() throws {
+        let templateString = "Hello, {{.}}!\n"
+        let contextJSON = "\"world\"".data(using: .utf8)!
+        let expected = "Hello, world!\n"
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Unadorned tags should interpolate content into the template.")
+    }
+
+    func testImplicitIterators_HTMLEscaping() throws {
+        let templateString = "These characters should be HTML escaped: {{.}}\n"
+        let contextJSON = "\"& \\\" < >\"".data(using: .utf8)!
+        let expected = "These characters should be HTML escaped: &amp; &quot; &lt; &gt;\n"
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Basic interpolation should be HTML escaped.")
+    }
+
+    func testImplicitIterators_TripleMustache() throws {
+        let templateString = "These characters should not be HTML escaped: {{{.}}}\n"
+        let contextJSON = "\"& \\\" < >\"".data(using: .utf8)!
+        let expected = "These characters should not be HTML escaped: & \" < >\n"
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Triple mustaches should interpolate without HTML escaping.")
+    }
+
+    func testImplicitIterators_Ampersand() throws {
+        let templateString = "These characters should not be HTML escaped: {{&.}}\n"
+        let contextJSON = "\"& \\\" < >\"".data(using: .utf8)!
+        let expected = "These characters should not be HTML escaped: & \" < >\n"
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Ampersand should interpolate without HTML escaping.")
+    }
+
+    func testImplicitIterators_BasicIntegerInterpolation() throws {
+        let templateString = "\"{{.}} miles an hour!\""
+        let contextJSON = "85".data(using: .utf8)!
+        let expected = "\"85 miles an hour!\""
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Integers should interpolate seamlessly.")
     }
 
     func testInterpolation_SurroundingWhitespace() throws {
@@ -854,6 +1023,7 @@ final class InvertedTests: XCTestCase {
         return [
             ("testFalsey", testFalsey),
             ("testTruthy", testTruthy),
+            ("testNullisfalsey", testNullisfalsey),
             ("testContext", testContext),
             ("testList", testList),
             ("testEmptyList", testEmptyList),
@@ -898,6 +1068,18 @@ final class InvertedTests: XCTestCase {
         let rendered = template.render(with: context)
 
         XCTAssertEqual(rendered, expected, "Truthy sections should have their contents omitted.")
+    }
+
+    func testNullisfalsey() throws {
+        let templateString = "\"{{^null}}This should be rendered.{{/null}}\""
+        let contextJSON = "{\"null\":null}".data(using: .utf8)!
+        let expected = "\"This should be rendered.\""
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context)
+
+        XCTAssertEqual(rendered, expected, "Null is falsey.")
     }
 
     func testContext() throws {
@@ -1320,7 +1502,7 @@ final class PartialsTests: XCTestCase {
             ("testStandaloneLineEndings", testStandaloneLineEndings),
             ("testStandaloneWithoutPreviousLine", testStandaloneWithoutPreviousLine),
             ("testStandaloneWithoutNewline", testStandaloneWithoutNewline),
-            ("testStandaloneIndentation", testStandaloneIndentation),
+//            ("testStandaloneIndentation", testStandaloneIndentation),
             ("testPaddingWhitespace", testPaddingWhitespace),
         ]
     }
@@ -1369,7 +1551,7 @@ final class PartialsTests: XCTestCase {
 
     func testRecursion() throws {
         let templateString = "{{>node}}"
-        let contextJSON = "{\"nodes\":[{\"content\":\"Y\",\"nodes\":[]}],\"content\":\"X\"}".data(using: .utf8)!
+        let contextJSON = "{\"nodes\":[{\"nodes\":[],\"content\":\"Y\"}],\"content\":\"X\"}".data(using: .utf8)!
         let expected = "X<Y<>>"
         let partials = try [
             "node": Template("{{content}}<{{#nodes}}{{>node}}{{/nodes}}>")
@@ -1697,17 +1879,50 @@ final class DelimitersTests: XCTestCase {
 
 
 /**
-Parent tags are used to expand an external template into the current template,
-with optional parameters delimited by block tags.
+Like partials, Parent tags are used to expand an external template into the
+current template. Unlike partials, Parent tags may contain optional
+arguments delimited by Block tags. For this reason, Parent tags may also be
+referred to as Parametric Partials.
 
-These tags' content MUST be a non-whitespace character sequence NOT containing
-the current closing delimiter; each Parent tag MUST be followed by an End
-Section tag with the same content within the matching parent tag.
+The Parent tags' content MUST be a non-whitespace character sequence NOT
+containing the current closing delimiter; each Parent tag MUST be followed by
+an End Section tag with the same content within the matching Parent tag.
 
-Block tags are used inside of parent tags to assign data onto the context stack 
-prior to rendering the parent template. Outside of parent tags, block tags are
-used to indicate where value set in the parent tag should be placed. If no value
-is set then the content in between the block tags, if any, is rendered.
+This tag's content names the Parent template to inject. Set Delimiter tags
+Preceding a Parent tag MUST NOT affect the parsing of the injected external
+template. The Parent MUST be rendered against the context stack local to the
+tag. If the named Parent cannot be found, the empty string SHOULD be used
+instead, as in interpolations.
+
+Parent tags SHOULD be treated as standalone when appropriate. If this tag is
+used standalone, any whitespace preceding the tag should be treated as
+indentation, and prepended to each line of the Parent before rendering.
+
+The Block tags' content MUST be a non-whitespace character sequence NOT
+containing the current closing delimiter. Each Block tag MUST be followed by
+an End Section tag with the same content within the matching Block tag. This
+tag's content determines the parameter or argument name.
+
+Block tags may appear both inside and outside of Parent tags. In both cases,
+they specify a position within the template that can be overridden; it is a
+parameter of the containing template. The template text between the Block tag
+and its matching End Section tag defines the default content to render when
+the parameter is not overridden from outside.
+
+In addition, when used inside of a Parent tag, the template text between a
+Block tag and its matching End Section tag defines content that replaces the
+default defined in the Parent template. This content is the argument passed
+to the Parent template.
+
+The practice of injecting an external template using a Parent tag is referred
+to as inheritance. If the Parent tag includes a Block tag that overrides a
+parameter of the Parent template, this may also be referred to as
+substitution.
+
+Parent templates are taken from the same namespace as regular Partial
+templates and in fact, injecting a regular Partial is exactly equivalent to
+injecting a Parent without making any substitutions. Parameter and arguments
+names live in a namespace that is distinct from both Partials and the context.
 
  */
 final class InheritanceTests: XCTestCase {
@@ -1723,16 +1938,17 @@ final class InheritanceTests: XCTestCase {
             ("testOverriddencontent", testOverriddencontent),
             ("testDatadoesnotoverrideblock", testDatadoesnotoverrideblock),
             ("testDatadoesnotoverrideblockdefault", testDatadoesnotoverrideblockdefault),
-            ("testOverriddenpartial", testOverriddenpartial),
-            ("testTwooverriddenpartials", testTwooverriddenpartials),
-            ("testOverridepartialwithnewlines", testOverridepartialwithnewlines),
+            ("testOverriddenparent", testOverriddenparent),
+            ("testTwooverriddenparents", testTwooverriddenparents),
+            ("testOverrideparentwithnewlines", testOverrideparentwithnewlines),
             ("testInheritindentation", testInheritindentation),
-            ("testSupertemplate", testSupertemplate),
+            ("testOnlyoneoverride", testOnlyoneoverride),
+            ("testParenttemplate", testParenttemplate),
             ("testRecursion", testRecursion),
             ("testMulti_levelinheritance", testMulti_levelinheritance),
             ("testMulti_levelinheritance_nosubchild", testMulti_levelinheritance_nosubchild),
-            ("testTextinsidesuper1", testTextinsidesuper1),
-            ("testTextinsidesuper2", testTextinsidesuper2),
+            ("testTextinsideparent", testTextinsideparent),
+            ("testTextinsideparent2", testTextinsideparent2),
         ]
     }
 
@@ -1809,7 +2025,7 @@ final class InheritanceTests: XCTestCase {
     }
 
     func testInherit() throws {
-        let templateString = "{{<include}}{{/include}}"
+        let templateString = "{{<include}}{{/include}}\n"
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "default content"
         let partials = try [
@@ -1820,7 +2036,7 @@ final class InheritanceTests: XCTestCase {
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Default content rendered inside included templates")
+        XCTAssertEqual(rendered, expected, "Default content rendered inside inherited templates")
     }
 
     func testOverriddencontent() throws {
@@ -1850,7 +2066,7 @@ final class InheritanceTests: XCTestCase {
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Provided data does not override data passed into parent")
+        XCTAssertEqual(rendered, expected, "Context does not override argument passed into parent")
     }
 
     func testDatadoesnotoverrideblockdefault() throws {
@@ -1865,91 +2081,106 @@ final class InheritanceTests: XCTestCase {
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Provided data does not override default value of block")
+        XCTAssertEqual(rendered, expected, "Context does not override default content of block")
     }
 
-    func testOverriddenpartial() throws {
-        let templateString = "test {{<partial}}{{$stuff}}override{{/stuff}}{{/partial}}"
+    func testOverriddenparent() throws {
+        let templateString = "test {{<parent}}{{$stuff}}override{{/stuff}}{{/parent}}"
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "test override"
         let partials = try [
-            "partial": Template("{{$stuff}}...{{/stuff}}")
+            "parent": Template("{{$stuff}}...{{/stuff}}")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Overridden partial")
+        XCTAssertEqual(rendered, expected, "Overridden parent")
     }
 
-    func testTwooverriddenpartials() throws {
-        let templateString = "test {{<partial}}{{$stuff}}override1{{/stuff}}{{/partial}} {{<partial}}{{$stuff}}override2{{/stuff}}{{/partial}}\n"
+    func testTwooverriddenparents() throws {
+        let templateString = "test {{<parent}}{{$stuff}}override1{{/stuff}}{{/parent}} {{<parent}}{{$stuff}}override2{{/stuff}}{{/parent}}\n"
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "test |override1 default| |override2 default|\n"
         let partials = try [
-            "partial": Template("|{{$stuff}}...{{/stuff}}{{$default}} default{{/default}}|")
+            "parent": Template("|{{$stuff}}...{{/stuff}}{{$default}} default{{/default}}|")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Two overridden partials with different content")
+        XCTAssertEqual(rendered, expected, "Two overridden parents with different content")
     }
 
-    func testOverridepartialwithnewlines() throws {
-        let templateString = "{{<partial}}{{$ballmer}}peaked\n\n:(\n{{/ballmer}}{{/partial}}"
+    func testOverrideparentwithnewlines() throws {
+        let templateString = "{{<parent}}{{$ballmer}}\npeaked\n\n:(\n{{/ballmer}}{{/parent}}"
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "peaked\n\n:(\n"
         let partials = try [
-            "partial": Template("{{$ballmer}}peaking{{/ballmer}}")
+            "parent": Template("{{$ballmer}}peaking{{/ballmer}}")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Override partial with newlines")
+        XCTAssertEqual(rendered, expected, "Override parent with newlines")
     }
 
     func testInheritindentation() throws {
-        let templateString = "{{<partial}}{{$stuff2}}override two{{/stuff2}}{{/partial}}"
+        let templateString = "{{<parent}}{{$nineties}}hammer time{{/nineties}}{{/parent}}"
+        let contextJSON = "{}".data(using: .utf8)!
+        let expected = "stop:\n  hammer time\n"
+        let partials = try [
+            "parent": Template("stop:\n  {{$nineties}}collaborate and listen{{/nineties}}\n")
+        ]
+
+        let context = try JSONDecoder().decode(Context.self, from: contextJSON)
+        let template = try Template(templateString)
+        let rendered = template.render(with: context, partials: partials)
+
+        XCTAssertEqual(rendered, expected, "Inherit indentation when overriding a parent")
+    }
+
+    func testOnlyoneoverride() throws {
+        let templateString = "{{<parent}}{{$stuff2}}override two{{/stuff2}}{{/parent}}"
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "new default one, override two"
         let partials = try [
-            "partial": Template("{{$stuff}}new default one{{/stuff}}, {{$stuff2}}new default two{{/stuff2}}")
+            "parent": Template("{{$stuff}}new default one{{/stuff}}, {{$stuff2}}new default two{{/stuff2}}")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Override one substitution but not the other")
+        XCTAssertEqual(rendered, expected, "Override one parameter but not the other")
     }
 
-    func testSupertemplate() throws {
-        let templateString = "{{>include}}|{{<include}}{{/include}}"
+    func testParenttemplate() throws {
+        let templateString = "{{>parent}}|{{<parent}}{{/parent}}"
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "default content|default content"
         let partials = try [
-            "include": Template("{{$foo}}default content{{/foo}}")
+            "parent": Template("{{$foo}}default content{{/foo}}")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Super templates behave identically to partials when called with no parameters")
+        XCTAssertEqual(rendered, expected, "Parent templates behave identically to partials when called with no parameters")
     }
 
     func testRecursion() throws {
-        let templateString = "{{<include}}{{$foo}}override{{/foo}}{{/include}}"
+        let templateString = "{{<parent}}{{$foo}}override{{/foo}}{{/parent}}"
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "override override override don't recurse"
         let partials = try [
-            "include2": Template("{{$foo}}include2 default content{{/foo}} {{<include}}{{$bar}}don't recurse{{/bar}}{{/include}}"),
-            "include": Template("{{$foo}}default content{{/foo}} {{$bar}}{{<include2}}{{/include2}}{{/bar}}")
+            "parent2": Template("{{$foo}}parent2 default content{{/foo}} {{<parent}}{{$bar}}don't recurse{{/bar}}{{/parent}}"),
+            "parent": Template("{{$foo}}default content{{/foo}} {{$bar}}{{<parent2}}{{/parent2}}{{/bar}}")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1964,9 +2195,9 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "c"
         let partials = try [
-            "grandParent": Template("{{$a}}g{{/a}}"),
             "parent": Template("{{<older}}{{$a}}p{{/a}}{{/older}}"),
-            "older": Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}")
+            "older": Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}"),
+            "grandParent": Template("{{$a}}g{{/a}}")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1981,9 +2212,9 @@ final class InheritanceTests: XCTestCase {
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "p"
         let partials = try [
+            "parent": Template("{{<older}}{{$a}}p{{/a}}{{/older}}"),
             "grandParent": Template("{{$a}}g{{/a}}"),
-            "older": Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}"),
-            "parent": Template("{{<older}}{{$a}}p{{/a}}{{/older}}")
+            "older": Template("{{<grandParent}}{{$a}}o{{/a}}{{/grandParent}}")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
@@ -1993,34 +2224,34 @@ final class InheritanceTests: XCTestCase {
         XCTAssertEqual(rendered, expected, "Top-level substitutions take precedence in multi-level inheritance")
     }
 
-    func testTextinsidesuper1() throws {
-        let templateString = "{{<include}} asdfasd {{$foo}}hmm{{/foo}} asdfasdfasdf {{/include}}"
+    func testTextinsideparent() throws {
+        let templateString = "{{<parent}} asdfasd {{$foo}}hmm{{/foo}} asdfasdfasdf {{/parent}}"
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "hmm"
         let partials = try [
-            "include": Template("{{$foo}}default content{{/foo}}")
+            "parent": Template("{{$foo}}default content{{/foo}}")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Ignores text inside super templates, but does parse dollarsign tags")
+        XCTAssertEqual(rendered, expected, "Ignores text inside parent templates, but does parse $ tags")
     }
 
-    func testTextinsidesuper2() throws {
-        let templateString = "{{<include}} asdfasd asdfasdfasdf {{/include}}"
+    func testTextinsideparent2() throws {
+        let templateString = "{{<parent}} asdfasd asdfasdfasdf {{/parent}}"
         let contextJSON = "{}".data(using: .utf8)!
         let expected = "default content"
         let partials = try [
-            "include": Template("{{$foo}}default content{{/foo}}")
+            "parent": Template("{{$foo}}default content{{/foo}}")
         ]
 
         let context = try JSONDecoder().decode(Context.self, from: contextJSON)
         let template = try Template(templateString)
         let rendered = template.render(with: context, partials: partials)
 
-        XCTAssertEqual(rendered, expected, "Allows text inside a super tag, but ignores it")
+        XCTAssertEqual(rendered, expected, "Allows text inside a parent tag, but ignores it")
     }
 }
 
